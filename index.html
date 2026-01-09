@@ -2,98 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sachin's Messenger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-        .welcome-overlay { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 100; transition: opacity 1s ease; }
-        
-        /* Mobile Sidebar Logic */
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+        #app-interface { display: flex; width: 100vw; height: 100dvh; overflow: hidden; background: #020617; }
+        .sidebar-pane { width: 350px; flex-shrink: 0; display: flex; flex-direction: column; border-r: 1px solid rgba(255,255,255,0.05); }
+        .chat-pane { flex-grow: 1; display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #020617; }
+
         @media (max-width: 768px) {
-            .sidebar { position: fixed; left: -100%; transition: 0.3s; z-index: 40; height: 100%; width: 80%; }
-            .sidebar.active { left: 0; }
-            .chat-main { width: 100%; }
+            .sidebar-pane { width: 100vw; }
+            .chat-pane { position: fixed; inset: 0; width: 100vw; transform: translateX(100%); z-index: 50; }
+            .chat-pane.active { transform: translateX(0); }
         }
+
+        .bubble-me { background: #2563eb; color: white; border-radius: 18px 18px 4px 18px; }
+        .bubble-other { background: #1e293b; color: #f1f5f9; border-radius: 18px 18px 18px 4px; }
         
-        .typing-dot { width: 4px; height: 4px; background: #60a5fa; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
+        /* Pulse for searching */
+        .searching-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
-<body class="bg-[#0f172a] text-slate-200 font-sans h-screen overflow-hidden">
+<body class="bg-[#020617] text-slate-200 h-screen overflow-hidden">
 
-    <div id="welcome-screen" class="welcome-overlay">
-        <h1 id="welcome-text" class="text-3xl md:text-4xl font-light text-blue-400 animate-pulse tracking-widest uppercase text-center p-4">Welcome to<br>Sachin's World</h1>
-    </div>
-
-    <div id="identity-popup" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-        <div class="glass p-6 md:p-8 rounded-3xl w-full max-w-sm shadow-2xl" onkeypress="if(event.key==='Enter') saveIdentity()">
-            <h2 class="text-xl font-bold mb-4 text-blue-400">Complete Profile</h2>
-            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-3 mb-3 bg-slate-800 rounded-xl border border-slate-700 outline-none">
+    <div id="identity-popup" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
+        <div class="glass p-8 rounded-[32px] w-full max-w-sm shadow-2xl border-blue-500/20">
+            <h2 class="text-2xl font-bold mb-2 text-white">Get Started</h2>
+            <p class="text-slate-400 text-sm mb-6">Create your unique identity to start chatting.</p>
+            
+            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-4 mb-3 bg-slate-900 rounded-2xl outline-none border border-slate-800 focus:border-blue-500 transition-all">
             
             <div class="flex gap-2 mb-3">
-                <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400 text-sm">Male</button>
-                <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-2 rounded-lg bg-slate-700 text-sm">Female</button>
+                <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-3 rounded-xl bg-blue-600 text-sm font-bold border border-blue-400">Male</button>
+                <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-3 rounded-xl bg-slate-900 text-sm font-bold border border-slate-800">Female</button>
             </div>
 
-            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-3 mb-6 bg-slate-800 rounded-xl border border-slate-700 outline-none">
-            <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold">Start Chatting</button>
+            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-4 mb-6 bg-slate-900 rounded-2xl outline-none border border-slate-800 focus:border-blue-500">
+            
+            <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95">Create Profile</button>
         </div>
     </div>
 
-    <div id="app-interface" class="hidden flex h-screen w-full">
-        <aside id="sidebar" class="sidebar bg-[#1e293b] md:bg-[#1e293b]/50 flex flex-col w-[300px] border-r border-white/5">
-            <div class="p-6 text-center border-b border-white/5">
-                <img id="my-avatar" src="" class="w-16 h-16 mx-auto rounded-full border-2 border-blue-500 p-1 mb-2 bg-slate-800">
-                <h3 id="sidebar-name" class="font-bold text-lg truncate">Your Name</h3>
-                <p id="sidebar-id" class="text-[10px] text-slate-500 font-mono tracking-tighter">ID: SAC-XXXX</p>
+    <div id="app-interface">
+        <aside class="sidebar-pane">
+            <div id="profile-area" class="p-6 border-b border-white/5"></div>
+
+            <div class="p-4">
+                <div class="relative group">
+                    <span class="absolute left-4 top-3.5 text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <input id="global-search" type="text" placeholder="Search by Unique ID (SAC-XXXX)" 
+                           class="w-full bg-slate-900/50 border border-white/5 p-3 pl-10 rounded-2xl outline-none focus:border-blue-500 focus:bg-slate-900 transition-all text-sm uppercase"
+                           onkeypress="if(event.key==='Enter') searchUser()">
+                </div>
             </div>
 
-            <div class="p-4 space-y-2">
-                <button onclick="createRoom()" class="w-full bg-blue-600/20 text-blue-400 p-3 rounded-xl text-sm font-bold border border-blue-500/20 hover:bg-blue-600/30">+ Create Room</button>
-                <button onclick="promptJoin()" class="w-full bg-slate-800/50 p-3 rounded-xl text-sm font-bold border border-white/5 hover:bg-slate-700/50">📥 Join Code</button>
-            </div><div class="flex-1 overflow-y-auto px-4">
-                <p class="text-[10px] font-black text-slate-500 uppercase mb-3 ml-2">Recent Chats</p>
-                <div id="recent-chats" class="space-y-1"></div>
-                <div class="mt-4 pt-4 border-t border-white/5 pb-4">
-                    <input id="search-id" type="text" placeholder="Search SAC-XXXX" class="w-full bg-slate-900/50 p-2 text-xs rounded-lg border border-white/5 outline-none mb-2">
-                    <button onclick="handleAdvancedAction('search')" class="w-full bg-slate-800 py-2 text-xs rounded-lg font-bold">Search ID</button>
+            <div class="flex-1 overflow-y-auto px-2 pb-6">
+                <div class="px-4 py-2 flex justify-between items-center">
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Messages</span>
                 </div>
+                <div id="recent-chats" class="space-y-1"></div>
             </div>
         </aside>
 
-        <main class="chat-main flex-1 flex flex-col bg-[#0f172a] relative">
-            <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-center p-6">
-                <div class="text-5xl mb-4 opacity-20">💬</div>
-                <h2 class="text-xl font-light opacity-40">Select a room to start chatting</h2>
-                <button onclick="toggleSidebar()" class="md:hidden mt-4 bg-blue-600 px-4 py-2 rounded-lg text-sm">View Contacts</button>
-            </div>
-
-            <header id="active-chat-header" class="hidden glass p-3 md:p-4 flex justify-between items-center z-10">
+        <main id="chat-pane" class="chat-pane">
+            <header class="glass p-3 md:p-4 flex items-center justify-between z-10 shadow-xl">
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleSidebar()" class="md:hidden text-xl pr-2">☰</button>
-                    <img id="partner-avatar" src="" class="w-10 h-10 rounded-full bg-slate-800">
+                    <button onclick="closeChat()" class="p-2 -ml-2 rounded-full hover:bg-white/5 md:hidden">
+                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <div class="relative">
+                        <img id="partner-avatar" src="" class="w-10 h-10 rounded-full bg-slate-800 border border-white/5 hidden">
+                        <div id="online-indicator" class="hidden absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#020617] rounded-full"></div>
+                    </div>
                     <div>
-                        <p id="chat-partner-name" class="font-bold text-sm leading-none">Partner Name</p>
-                        <p id="chat-status-text" class="text-[10px] text-slate-500 font-bold uppercase mt-1">Connecting...</p>
+                        <p id="chat-partner-name" class="font-bold text-sm text-white">Select a Chat</p>
+                        <p id="chat-status-text" class="text-[10px] text-slate-500 font-medium"></p>
                     </div>
                 </div>
-                <button onclick="location.reload()" class="text-[10px] bg-white/5 px-3 py-2 rounded-lg font-bold">EXIT</button>
             </header>
 
-            <div id="messages" class="hidden flex-1 overflow-y-auto p-4 md:p-6 space-y-4"></div>
-
-            <div id="typing-buddy" class="hidden px-6 py-2 flex items-center gap-2">
-                <div class="glass px-3 py-2 rounded-2xl rounded-tl-none flex gap-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+            <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div id="empty-chat" class="h-full flex flex-col items-center justify-center opacity-20">
+                    <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <p class="text-sm">Search an ID to start talking</p>
+                </div>
             </div>
 
-            <div id="input-area" class="hidden p-4 md:p-6">
-                <div class="glass flex items-center gap-2 p-1.5 rounded-2xl">
-                    <input id="msg-input" type="text" placeholder="Type a message..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm" oninput="emitTyping()" onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()" class="bg-blue-600 p-2.5 rounded-xl hover:bg-blue-500 transition-all">
+            <div class="p-4 md:p-6 bg-[#020617]">
+                <div class="glass flex items-center gap-2 p-1.5 rounded-[24px] border border-white/5 shadow-2xl">
+                    <input id="msg-input" type="text" placeholder="Message..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm text-slate-200" onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" class="bg-blue-600 p-3 rounded-full hover:bg-blue-500 transition-all active:scale-90 shadow-lg shadow-blue-600/40">
                         <svg class="w-5 h-5 text-white transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
                     </button>
                 </div>
@@ -102,171 +105,189 @@
     </div>
 
     <script>
-        let peer, conn, typingTimeout, selectedGender = 'male';
-        let myProfile = JSON.parse(localStorage.getItem('myProfile'))  null;
-        let chatHistory = JSON.parse(localStorage.getItem('chatHistory'))  {};function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        let peer, conn, selectedGender = 'male';
+        let myProfile = JSON.parse(localStorage.getItem('myProfile')) || null;
+        let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || {};
+
+        function getAvatar(name, gender) { return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&gender=${gender || 'male'}`; }
+
         function setRegGender(g) {
             selectedGender = g;
-            document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
-            document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-2 rounded-lg bg-pink-600 border border-pink-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
+            document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-3 rounded-xl bg-blue-600 text-sm font-bold border border-blue-400' : 'flex-1 py-3 rounded-xl bg-slate-900 text-sm font-bold border border-slate-800';
+            document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-3 rounded-xl bg-pink-600 text-sm font-bold border border-pink-400' : 'flex-1 py-3 rounded-xl bg-slate-900 text-sm font-bold border border-slate-800';
         }
-        function getAvatar(name, gender) { return https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&gender=${gender === 'female' ? 'female' : 'male'}; }
 
         window.onload = () => {
-            const speak = () => {
-                const text = myProfile ? Welcome back, ${myProfile.name} : "Welcome to Sachin's world";
-                const msg = new SpeechSynthesisUtterance(text);
-                msg.voice = speechSynthesis.getVoices().find(v => v.name.includes('Female'))  null;
-                speechSynthesis.speak(msg);
-            };
-            if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = speak; else speak();
-
-            setTimeout(() => {
-                document.getElementById('welcome-screen').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('welcome-screen').classList.add('hidden');
-                    document.getElementById('app-interface').classList.remove('hidden');
-                    initPeer();
-                    if(myProfile) updateSidebar();
-                }, 1000);
-            }, 2500);
+            if(!myProfile) {
+                document.getElementById('identity-popup').classList.remove('hidden');
+            } else {
+                initMessenger();
+            }
         };
-
-        function initPeer() {
-            peer = new Peer(myProfile ? myProfile.sacId : null);
-            peer.on('connection', (c) => { conn = c; setupConnection(); });
-        }
-
-        function updateSidebar() {
-            document.getElementById('sidebar-name').innerText = myProfile.name;
-            document.getElementById('sidebar-id').innerText = `ID: ${myProfile.sacId}`;
-            document.getElementById('my-avatar').src = getAvatar(myProfile.name, myProfile.gender);
-            renderRecentChats();
-        }
 
         function saveIdentity() {
             const name = document.getElementById('reg-name').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
-            if(!name  !phone) return alert("Please fill all details");
-            myProfile = { name, phone, gender: selectedGender, sacId: 'SAC-'+Math.floor(1000+Math.random()*9000) };
+            if(!name || !phone) return alert("Fill all fields");
+            const sacId = 'SAC-' + Math.floor(1000 + Math.random() * 9000);
+            myProfile = { name, phone, gender: selectedGender, sacId };
             localStorage.setItem('myProfile', JSON.stringify(myProfile));
             location.reload();
         }
 
-        function setupConnection() {
-            conn.on('open', () => {
-                toggleChatView(true);
-                if(myProfile) conn.send({type: 'identity', profile: myProfile});
-                document.getElementById('chat-status-text').innerText = "Online";
-                loadHistory(conn.peer);
+        function initMessenger() {
+            renderProfileArea();
+            renderRecentChats();
+            
+            peer = new Peer(myProfile.sacId);
+            
+            peer.on('open', (id) => console.log("Online as:", id));
+            
+            peer.on('connection', (incoming) => {
+                conn = incoming;
+                setupHandshake();
             });
-            conn.on('data', (data) => {
-                if(data.type === 'identity') {
-                    document.getElementById('chat-partner-name').innerText = data.profile.name;
-                    document.getElementById('partner-avatar').src = getAvatar(data.profile.name, data.profile.gender);
-                    saveToHistory(conn.peer, data.profile.name, data.profile.gender, null, false);
-                } else if(data.type === 'typing') {
-                    document.getElementById('typing-buddy').classList.toggle('hidden', !data.isTyping);
-                } else {
-                    appendMessage(data.text, 'other');
-                    saveToHistory(conn.peer, null, null, data.text, false);
-                }
-            });
-            conn.on('close', () => { document.getElementById('chat-status-text').innerText = "Offline"; });
-        }function openRecentChat(id) {
-            if(window.innerWidth < 768) toggleSidebar();
-            toggleChatView(true);
-            loadHistory(id); // Load history immediately like WhatsApp
-            document.getElementById('chat-status-text').innerText = "Connecting...";
-            conn = peer.connect(id);
-            setupConnection();
         }
 
-        function toggleChatView(active) {
-            document.getElementById('empty-state').classList.toggle('hidden', active);
-            document.getElementById('active-chat-header').classList.toggle('hidden', !active);
-            document.getElementById('messages').classList.toggle('hidden', !active);
-            document.getElementById('input-area').classList.toggle('hidden', !active);
+        function searchUser() {
+            const id = document.getElementById('global-search').value.trim().toUpperCase();
+            if(!id) return;
+            if(id === myProfile.sacId) return alert("You cannot search yourself!");
+            
+            openChatWindow(id);
+            document.getElementById('chat-status-text').innerText = "Searching network...";
+            document.getElementById('chat-status-text').classList.add('searching-pulse');
+
+            conn = peer.connect(id);
+            setupHandshake();
+            
+            // Clear search
+            document.getElementById('global-search').value = '';
+        }
+
+        function setupHandshake() {
+            conn.on('open', () => {
+                document.getElementById('chat-status-text').innerText = "Active now";
+                document.getElementById('chat-status-text').classList.remove('searching-pulse');
+                document.getElementById('online-indicator').classList.remove('hidden');
+                
+                // Exchange Profile
+                conn.send({ type: 'handshake', profile: myProfile });
+            });
+
+            conn.on('data', (data) => {
+                if(data.type === 'handshake') {
+                    chatHistory[conn.peer] = { 
+                        name: data.profile.name, 
+                        gender: data.profile.gender, 
+                        phone: data.profile.phone,
+                        messages: chatHistory[conn.peer]?.messages || [] 
+                    };
+                    updateHeaderUI(data.profile.name, data.profile.gender);
+                    saveAndRefresh();
+                } else if(data.type === 'text') {
+                    appendMessage(data.content, false, chatHistory[conn.peer]?.gender);
+                    saveMessage(conn.peer, data.content, false);
+                }
+            });
+            
+            conn.on('close', () => {
+                document.getElementById('chat-status-text').innerText = "Offline";
+                document.getElementById('online-indicator').classList.add('hidden');
+            });
+        }
+
+        function openChatWindow(id) {
+            document.getElementById('chat-pane').classList.add('active');
+            document.getElementById('empty-chat').classList.add('hidden');
+            document.getElementById('partner-avatar').classList.remove('hidden');
+            
+            const existing = chatHistory[id];
+            updateHeaderUI(existing?.name || id, existing?.gender || 'male');
+            loadMessages(id);
+        }
+
+        function updateHeaderUI(name, gender) {
+            document.getElementById('chat-partner-name').innerText = name;
+            document.getElementById('partner-avatar').src = getAvatar(name, gender);
         }
 
         function sendMsg() {
-            const val = document.getElementById('msg-input').value.trim();
-            if(!val  !conn) return;
-            conn.send({type: 'chat', text: val});
-            appendMessage(val, 'me');
-            saveToHistory(conn.peer, null, null, val, true);
-            document.getElementById('msg-input').value = "";
+            const text = document.getElementById('msg-input').value.trim();
+            if(!text || !conn || !conn.open) return;
+            
+            conn.send({ type: 'text', content: text });
+            appendMessage(text, true);
+            saveMessage(conn.peer, text, true);
+            document.getElementById('msg-input').value = '';
         }
 
-        function saveToHistory(pid, name, gender, text, isMe) {
-            if(!myProfile) return;
-            if(!chatHistory[pid]) chatHistory[pid] = { name: name  pid, gender: gender  'male', messages: [] };
-            if(name) chatHistory[pid].name = name;
-            if(gender) chatHistory[pid].gender = gender;
-            if(text) chatHistory[pid].messages.push({text, isMe, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})});
+        function saveMessage(id, content, isMe) {
+            if(!chatHistory[id]) chatHistory[id] = { name: id, messages: [] };
+            chatHistory[id].messages.push({ content, isMe, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+            saveAndRefresh();
+        }
+
+        function saveAndRefresh() {
             localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
             renderRecentChats();
         }
 
-        function loadHistory(pid) {
+        function loadMessages(id) {
             const container = document.getElementById('messages');
             container.innerHTML = '';
-            if(chatHistory[pid]) {
-                document.getElementById('chat-partner-name').innerText = chatHistory[pid].name;
-                document.getElementById('partner-avatar').src = getAvatar(chatHistory[pid].name, chatHistory[pid].gender);
-                chatHistory[pid].messages.forEach(m => appendMessage(m.text, m.isMe, m.time));
+            if(chatHistory[id]) {
+                chatHistory[id].messages.forEach(m => appendMessage(m.content, m.isMe, chatHistory[id].gender));
             }
+        }
+
+        function appendMessage(content, isMe, gender) {
+            const container = document.getElementById('messages');
+            const wrap = document.createElement('div');
+            wrap.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start items-end gap-2'}`;
+            
+            const avatar = !isMe ? `<img src="${getAvatar('P', gender)}" class="w-6 h-6 rounded-full border border-white/5 shadow-sm mb-1">` : '';
+            wrap.innerHTML = `${avatar}<div class="max-w-[80%] p-3 text-sm shadow-xl ${isMe ? 'bubble-me' : 'bubble-other'}">${content}</div>`;
+            
+            container.appendChild(wrap);
+            container.scrollTop = container.scrollHeight;
         }
 
         function renderRecentChats() {
             const list = document.getElementById('recent-chats');
             list.innerHTML = '';
-            Object.keys(chatHistory).sort((a,b) => b.time - a.time).forEach(id => {
-                const b = document.createElement('div');
-                b.className = "flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-all";
-                b.innerHTML = `<img src="${getAvatar(chatHistory[id].name, chatHistory[id].gender)}" class="w-10 h-10 rounded-full bg-slate-800">
-                               <div class="flex-1 overflow-hidden"><p class="text-sm font-bold truncate">${chatHistory[id].name}</p><p class="text-[10px] text-slate-500 font-mono">${id}</p></div>`;
-                b.onclick = () => openRecentChat(id);
-                list.appendChild(b);
+            Object.keys(chatHistory).sort((a,b) => b.messages?.length - a.messages?.length).forEach(id => {
+                const chat = chatHistory[id];
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-3 p-3 mx-2 rounded-2xl cursor-pointer hover:bg-white/5 transition-all active:scale-[0.98]";
+                div.innerHTML = `
+                    <img src="${getAvatar(chat.name, chat.gender)}" class="w-12 h-12 rounded-full border border-white/5">
+                    <div class="flex-1 overflow-hidden">
+                        <p class="font-bold text-sm text-white truncate">${chat.name}</p>
+                        <p class="text-[10px] text-slate-500 font-mono">ID: ${id}</p>
+                    </div>
+                `;
+                div.onclick = () => openChatWindow(id);
+                list.appendChild(div);
             });
         }
 
-        function appendMessage(text, isMe, time = null) {
-            const container = document.getElementById('messages');
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
-            const t = time  new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            wrapper.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] px-4 py-2 rounded-2xl ${isMe ? 'bg-blue-600 rounded-tr-none' : 'glass rounded-tl-none'} text-sm">
-                ${text}<p class="text-[8px] opacity-50 mt-1 text-right">${t}</p></div>`;
-            container.appendChild(wrapper);
-            container.scrollTop = container.scrollHeight;
-        }function createRoom() {
-            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            alert("Room Code: " + code);
-            toggleChatView(true);
-            document.getElementById('chat-partner-name').innerText = "Room Created";
-            document.getElementById('chat-status-text').innerText = "Share Code: " + code;
-            if(!myProfile) setTimeout(() => { if(!myProfile) document.getElementById('identity-popup').classList.remove('hidden'); }, 60000);
+        function renderProfileArea() {
+            document.getElementById('profile-area').innerHTML = `
+                <div class="flex items-center gap-4">
+                    <img src="${getAvatar(myProfile.name, myProfile.gender)}" class="w-12 h-12 rounded-full border-2 border-blue-500 p-0.5">
+                    <div class="flex-1 overflow-hidden">
+                        <p class="font-bold text-sm truncate">${myProfile.name}</p>
+                        <p class="text-[10px] text-blue-500 font-mono font-bold">${myProfile.sacId}</p>
+                    </div>
+                    <button onclick="navigator.clipboard.writeText('${myProfile.sacId}');alert('Copied!')" class="p-2 bg-slate-900 rounded-xl border border-white/5">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </button>
+                </div>
+            `;
         }
 
-        function promptJoin() {
-            const code = prompt("Enter 6-digit Code:");
-            if(code) { openRecentChat(code.toUpperCase()); }
-        }
-
-        function handleAdvancedAction(type) {
-            if(!myProfile) return document.getElementById('identity-popup').classList.remove('hidden');
-            const id = document.getElementById('search-id').value.toUpperCase().trim();
-            if(id) openRecentChat(id);
-        }
-
-        function emitTyping() {
-            if(conn && conn.open) {
-                conn.send({type: 'typing', isTyping: true});
-                clearTimeout(typingTimeout);
-                typingTimeout = setTimeout(() => conn.send({type: 'typing', isTyping: false}), 2000);
-            }
-        }
+        function closeChat() { document.getElementById('chat-pane').classList.remove('active'); }
     </script>
 </body>
 </html>
