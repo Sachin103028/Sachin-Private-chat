@@ -19,28 +19,33 @@
 <body class="bg-[#0f172a] text-slate-200 font-sans h-screen overflow-hidden">
 
     <div id="welcome-screen" class="welcome-overlay">
-        <h1 id="welcome-text" class="text-4xl font-light text-blue-400 animate-pulse tracking-widest uppercase">Welcome to Sachin's World</h1>
+        <h1 id="welcome-text" class="text-4xl font-light text-blue-400 animate-pulse tracking-widest uppercase text-center">Welcome to<br>Sachin's World</h1>
     </div>
 
     <div id="identity-popup" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
         <div class="glass p-8 rounded-3xl w-full max-w-sm shadow-2xl">
             <h2 class="text-xl font-bold mb-4 text-blue-400">Identify Yourself</h2>
-            <input id="reg-name" type="text" placeholder="Enter Indian Name" class="w-full p-3 mb-3 bg-slate-800/50 rounded-xl border border-slate-700 outline-none focus:border-blue-500">
+            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-3 mb-3 bg-slate-800/50 rounded-xl border border-slate-700 outline-none focus:border-blue-500">
+            
+            <div class="flex gap-2 mb-3">
+                <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-2 rounded-lg bg-slate-700 border border-transparent hover:border-blue-500 transition-all text-sm">Male</button>
+                <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-2 rounded-lg bg-slate-700 border border-transparent hover:border-pink-500 transition-all text-sm">Female</button>
+            </div>
+
             <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-3 mb-4 bg-slate-800/50 rounded-xl border border-slate-700 outline-none">
             <div class="flex items-center gap-3 mb-6 bg-blue-500/10 p-3 rounded-xl">
                 <input type="checkbox" id="show-phone" checked class="w-5 h-5 accent-blue-500">
-                <label for="show-phone" id="label-share-name" class="text-xs">Show number to partner</label>
+                <label for="show-phone" class="text-xs">Show number to partner</label>
             </div>
             <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all shadow-lg">Enter Messenger</button>
         </div>
     </div>
 
     <div id="app-interface" class="hidden flex h-screen">
-        
         <aside class="sidebar flex flex-col bg-[#1e293b]/50">
             <div class="p-6 text-center border-b border-white/5">
                 <div class="relative inline-block mb-4">
-                    <img id="my-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=neutral" class="w-20 h-20 rounded-full border-2 border-blue-500 p-1 bg-slate-800">
+                    <img id="my-avatar" src="" class="w-20 h-20 rounded-full border-2 border-blue-500 p-1 bg-slate-800">
                     <div class="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-[#1e293b] rounded-full"></div>
                 </div>
                 <h3 id="sidebar-name" class="font-bold text-lg leading-tight">Your Name</h3>
@@ -48,18 +53,17 @@
             </div>
 
             <div class="p-4 space-y-2">
-                <button onclick="createRoom()" class="w-full flex items-center gap-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 p-3 rounded-xl transition-all border border-blue-500/20">
+                <button onclick="createRoom()" class="w-full flex items-center gap-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 p-3 rounded-xl border border-blue-500/20">
                     <span class="text-xl">+</span> <span class="text-sm font-semibold">Create Room</span>
                 </button>
-                <button onclick="promptJoin()" class="w-full flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-xl transition-all border border-white/5">
+                <button onclick="promptJoin()" class="w-full flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-xl border border-white/5">
                     <span class="text-xl">📥</span> <span class="text-sm font-semibold text-slate-300">Join Room</span>
                 </button>
             </div>
 
             <div class="flex-1 overflow-y-auto px-4 pb-4">
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Recent Chats</p>
-                <div id="recent-chats" class="space-y-1">
-                    </div>
+                <div id="recent-chats" class="space-y-1"></div>
                 
                 <div class="mt-4 pt-4 border-t border-white/5">
                     <input id="search-id" type="text" placeholder="Search SAC-XXXX" class="w-full bg-slate-900/50 p-2 text-xs rounded-lg border border-white/5 outline-none mb-2">
@@ -72,7 +76,6 @@
             <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-center opacity-40">
                 <div class="text-6xl mb-4">💬</div>
                 <h2 class="text-2xl font-light">Select a room to start chatting</h2>
-                <p class="text-sm mt-2">Choose a chat room from the list to begin.</p>
             </div>
 
             <div id="active-chat-header" class="hidden glass p-4 flex justify-between items-center">
@@ -82,11 +85,11 @@
                         <p id="chat-partner-name" class="font-bold text-sm">Partner Name</p>
                         <div class="flex items-center gap-1.5">
                             <div id="status-dot" class="w-2 h-2 bg-slate-500 rounded-full"></div>
-                            <p id="chat-status-text" class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Waiting</p>
+                            <p id="chat-status-text" class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Connecting...</p>
                         </div>
                     </div>
                 </div>
-                <button onclick="location.reload()" class="bg-white/5 hover:bg-white/10 p-2 rounded-lg">✕</button>
+                <button onclick="location.reload()" class="bg-white/5 hover:bg-white/10 p-2 rounded-lg text-xs font-bold">EXIT CHAT</button>
             </div>
 
             <div id="messages" class="hidden flex-1 overflow-y-auto p-6 space-y-4"></div>
@@ -100,7 +103,7 @@
             <div id="input-area" class="hidden p-6">
                 <div class="glass flex items-center gap-2 p-2 rounded-2xl">
                     <input id="msg-input" type="text" placeholder="Type a message..." class="flex-1 bg-transparent px-4 py-2 outline-none" oninput="emitTyping()">
-                    <button onclick="sendMsg()" class="bg-blue-600 p-3 rounded-xl hover:bg-blue-500 transition-all">
+                    <button onclick="sendMsg()" class="bg-blue-600 p-3 rounded-xl hover:bg-blue-500">
                         <svg class="w-5 h-5 text-white transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
                     </button>
                 </div>
@@ -109,25 +112,18 @@
     </div>
 
     <script>
-        let peer, conn, typingTimeout;
+        let peer, conn, typingTimeout, selectedGender = 'male';
         let myProfile = JSON.parse(localStorage.getItem('myProfile')) || null;
         let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || {};
-        let currentPartner = null;
 
-        // --- 1. Indian Name Gender & Avatar Logic ---
-        function getGenderAvatar(name) {
-            name = name.toLowerCase().trim();
-            // Common Indian female name endings
-            const femaleEndings = ['a', 'i', 'ee', 'shree', 'ta', 'ka', 'ti', 'na', 'ma'];
-            const lastChar = name.slice(-1);
-            const lastTwo = name.slice(-2);
-            
-            let isFemale = femaleEndings.some(e => name.endsWith(e));
-            // Exception handling for common male names ending in 'a'
-            if (['krishna', 'rama', 'arya', 'aditya'].includes(name)) isFemale = false;
+        function setRegGender(g) {
+            selectedGender = g;
+            document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
+            document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-2 rounded-lg bg-pink-600 border border-pink-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
+        }
 
-            const seed = name + (isFemale ? 'female' : 'male');
-            return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=${isFemale ? 'female' : 'male'}`;
+        function getAvatar(name, gender) {
+            return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&gender=${gender === 'female' ? 'female' : 'male'}`;
         }
 
         window.onload = () => {
@@ -137,7 +133,6 @@
                 const voices = window.speechSynthesis.getVoices();
                 msg.voice = voices.find(v => v.name.includes('Female')) || voices[0];
                 window.speechSynthesis.speak(msg);
-                if(myProfile) document.getElementById('welcome-text').innerText = `Hello, ${myProfile.name}`;
             };
             if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = speak; else speak();
 
@@ -149,27 +144,30 @@
                     initPeer();
                     if(myProfile) updateSidebar();
                 }, 1000);
-            }, 2000);
+            }, 2500);
         };
 
         function initPeer() {
             const myId = myProfile ? myProfile.sacId : null;
             peer = myId ? new Peer(myId) : new Peer();
-            peer.on('connection', (c) => { conn = c; setupConnection(); });
+            peer.on('connection', (c) => { 
+                conn = c; 
+                setupConnection(); 
+            });
         }
 
         function updateSidebar() {
             document.getElementById('sidebar-name').innerText = myProfile.name;
             document.getElementById('sidebar-id').innerText = `ID: ${myProfile.sacId}`;
-            document.getElementById('my-avatar').src = getGenderAvatar(myProfile.name);
+            document.getElementById('my-avatar').src = getAvatar(myProfile.name, myProfile.gender);
             renderRecentChats();
         }
 
         function saveIdentity() {
             const name = document.getElementById('reg-name').value;
             const phone = document.getElementById('reg-phone').value;
-            if(!name || !phone) return alert("Details required");
-            myProfile = { name, phone, show: document.getElementById('show-phone').checked, sacId: 'SAC-'+Math.floor(1000+Math.random()*9000) };
+            if(!name || !phone) return alert("Fill everything");
+            myProfile = { name, phone, gender: selectedGender, show: document.getElementById('show-phone').checked, sacId: 'SAC-'+Math.floor(1000+Math.random()*9000) };
             localStorage.setItem('myProfile', JSON.stringify(myProfile));
             location.reload();
         }
@@ -178,36 +176,27 @@
             conn.on('open', () => {
                 toggleChatView(true);
                 if(myProfile) conn.send({type: 'identity', profile: myProfile});
-                startChatTimer();
                 loadHistory(conn.peer);
+                updateStatus('active');
             });
 
             conn.on('data', (data) => {
                 if(data.type === 'identity') {
-                    currentPartner = data.profile;
                     document.getElementById('chat-partner-name').innerText = data.profile.name;
-                    document.getElementById('partner-avatar').src = getGenderAvatar(data.profile.name);
-                    updateStatus('active');
-                    saveToHistory(conn.peer, data.profile.name, null, false);
+                    document.getElementById('partner-avatar').src = getAvatar(data.profile.name, data.profile.gender);
+                    saveToHistory(conn.peer, data.profile.name, data.profile.gender, null, false);
                 } else if(data.type === 'typing') {
                     showTyping(data.isTyping);
                 } else {
                     appendMessage(data.text, 'other');
-                    saveToHistory(conn.peer, null, data.text, false);
+                    saveToHistory(conn.peer, null, null, data.text, false);
                 }
             });
             conn.on('close', () => updateStatus('disconnected'));
         }
 
-        function updateStatus(state) {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('chat-status-text');
-            if(state === 'active') { dot.className = 'w-2 h-2 bg-emerald-500 rounded-full'; text.innerText = 'Active Now'; }
-            if(state === 'disconnected') { dot.className = 'w-2 h-2 bg-red-500 rounded-full'; text.innerText = 'Offline'; }
-        }
-
         function emitTyping() {
-            if(conn) {
+            if(conn && conn.open) {
                 conn.send({type: 'typing', isTyping: true});
                 clearTimeout(typingTimeout);
                 typingTimeout = setTimeout(() => conn.send({type: 'typing', isTyping: false}), 2000);
@@ -216,30 +205,29 @@
 
         function showTyping(isTyping) {
             document.getElementById('typing-buddy').classList.toggle('hidden', !isTyping);
-            if(isTyping) {
-                document.getElementById('chat-status-text').innerText = "Typing...";
-                const container = document.getElementById('messages');
-                container.scrollTop = container.scrollHeight;
-            } else {
-                document.getElementById('chat-status-text').innerText = "Active Now";
-            }
+            document.getElementById('chat-status-text').innerText = isTyping ? "Typing..." : "Active Now";
+            const container = document.getElementById('messages');
+            container.scrollTop = container.scrollHeight;
         }
 
-        function startChatTimer() {
-            if (!myProfile) setTimeout(() => { if(!myProfile) document.getElementById('identity-popup').classList.remove('hidden'); }, 60000);
+        function updateStatus(state) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('chat-status-text');
+            if(state === 'active') { dot.className = 'w-2 h-2 bg-emerald-500 rounded-full'; text.innerText = 'Active Now'; }
+            else { dot.className = 'w-2 h-2 bg-red-500 rounded-full'; text.innerText = 'Offline'; }
         }
 
         function createRoom() {
             const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            alert("Room Code Created: " + code);
+            alert("Share this Room Code: " + code);
             toggleChatView(true);
-            document.getElementById('chat-partner-name').innerText = "Waiting for partner...";
-            document.getElementById('chat-status-text').innerText = "Share Code: " + (myProfile?.sacId || peer.id);
-            startChatTimer();
+            document.getElementById('chat-partner-name').innerText = "Waiting...";
+            document.getElementById('chat-status-text').innerText = "Code: " + code;
+            if(!myProfile) setTimeout(() => { if(!myProfile) document.getElementById('identity-popup').classList.remove('hidden'); }, 60000);
         }
 
         function promptJoin() {
-            const code = prompt("Enter 6-digit Room Code:");
+            const code = prompt("Enter Code:");
             if(code) { conn = peer.connect(code.toUpperCase()); setupConnection(); }
         }
 
@@ -261,18 +249,29 @@
             if(!val || !conn) return;
             conn.send({type: 'chat', text: val});
             appendMessage(val, 'me');
-            saveToHistory(conn.peer, null, val, true);
+            saveToHistory(conn.peer, null, null, val, true);
             document.getElementById('msg-input').value = "";
             conn.send({type: 'typing', isTyping: false});
         }
 
-        function saveToHistory(pid, name, text, isMe) {
+        function saveToHistory(pid, name, gender, text, isMe) {
             if(!myProfile) return;
-            if(!chatHistory[pid]) chatHistory[pid] = { name: name || pid, messages: [] };
+            if(!chatHistory[pid]) chatHistory[pid] = { name: name || pid, gender: gender || 'male', messages: [] };
             if(name) chatHistory[pid].name = name;
+            if(gender) chatHistory[pid].gender = gender;
             if(text) chatHistory[pid].messages.push({text, isMe});
             localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
             renderRecentChats();
+        }
+
+        function loadHistory(pid) {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            if(chatHistory[pid]) {
+                document.getElementById('chat-partner-name').innerText = chatHistory[pid].name;
+                document.getElementById('partner-avatar').src = getAvatar(chatHistory[pid].name, chatHistory[pid].gender);
+                chatHistory[pid].messages.forEach(m => appendMessage(m.text, m.isMe ? 'me' : 'other'));
+            }
         }
 
         function renderRecentChats() {
@@ -280,10 +279,9 @@
             list.innerHTML = '';
             Object.keys(chatHistory).forEach(id => {
                 const b = document.createElement('div');
-                b.className = "flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-all border border-transparent hover:border-white/5";
-                b.innerHTML = `<img src="${getGenderAvatar(chatHistory[id].name)}" class="w-10 h-10 rounded-full bg-slate-800">
-                               <div class="flex-1 overflow-hidden"><p class="text-sm font-bold truncate">${chatHistory[id].name}</p>
-                               <p class="text-[10px] text-slate-500 font-mono">${id}</p></div>`;
+                b.className = "flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer border border-transparent hover:border-white/5";
+                b.innerHTML = `<img src="${getAvatar(chatHistory[id].name, chatHistory[id].gender)}" class="w-10 h-10 rounded-full bg-slate-800">
+                               <div class="flex-1 overflow-hidden"><p class="text-sm font-bold truncate">${chatHistory[id].name}</p><p class="text-[10px] text-slate-500 font-mono">${id}</p></div>`;
                 b.onclick = () => { conn = peer.connect(id); setupConnection(); };
                 list.appendChild(b);
             });
@@ -294,7 +292,7 @@
             const wrapper = document.createElement('div');
             wrapper.className = `flex ${sender === 'me' ? 'justify-end' : 'justify-start'}`;
             const m = document.createElement('div');
-            m.className = `max-w-[70%] px-4 py-3 rounded-2xl ${sender === 'me' ? 'bg-blue-600 rounded-tr-none' : 'glass rounded-tl-none'} text-sm leading-relaxed`;
+            m.className = `max-w-[70%] px-4 py-3 rounded-2xl ${sender === 'me' ? 'bg-blue-600 rounded-tr-none' : 'glass rounded-tl-none'} text-sm`;
             m.innerText = text;
             wrapper.appendChild(m);
             container.appendChild(wrapper);
