@@ -7,10 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
         #app-interface { display: flex; width: 100vw; height: 100dvh; overflow: hidden; background: #020617; }
-        .sidebar-pane { width: 350px; flex-shrink: 0; display: flex; flex-direction: column; border-r: 1px solid rgba(255,255,255,0.05); }
-        .chat-pane { flex-grow: 1; display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #020617; }
+        .sidebar-pane { width: 350px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.05); }
+        .chat-pane { flex-grow: 1; display: flex; flex-direction: column; transition: transform 0.4s ease; background: #020617; }
 
         @media (max-width: 768px) {
             .sidebar-pane { width: 100vw; }
@@ -18,85 +18,64 @@
             .chat-pane.active { transform: translateX(0); }
         }
 
-        .bubble-me { background: #2563eb; color: white; border-radius: 18px 18px 4px 18px; }
+        .bubble-me { background: #2563eb; color: white; border-radius: 18px 18px 4px 18px; margin-left: auto; }
         .bubble-other { background: #1e293b; color: #f1f5f9; border-radius: 18px 18px 18px 4px; }
         
-        /* Pulse for searching */
-        .searching-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .typing-dot { width: 4px; height: 4px; background: #60a5fa; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
     </style>
 </head>
 <body class="bg-[#020617] text-slate-200 h-screen overflow-hidden">
 
     <div id="identity-popup" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
-        <div class="glass p-8 rounded-[32px] w-full max-w-sm shadow-2xl border-blue-500/20">
-            <h2 class="text-2xl font-bold mb-2 text-white">Get Started</h2>
-            <p class="text-slate-400 text-sm mb-6">Create your unique identity to start chatting.</p>
-            
-            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-4 mb-3 bg-slate-900 rounded-2xl outline-none border border-slate-800 focus:border-blue-500 transition-all">
-            
+        <div class="glass p-8 rounded-[32px] w-full max-w-sm shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6 text-white text-center">Create Profile</h2>
+            <input id="reg-name" type="text" placeholder="Full Name" class="w-full p-4 mb-3 bg-slate-900 rounded-2xl outline-none border border-slate-800 focus:border-blue-500">
             <div class="flex gap-2 mb-3">
-                <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-3 rounded-xl bg-blue-600 text-sm font-bold border border-blue-400">Male</button>
-                <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-3 rounded-xl bg-slate-900 text-sm font-bold border border-slate-800">Female</button>
+                <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-3 rounded-xl bg-blue-600 border border-blue-400 font-bold">Male</button>
+                <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-3 rounded-xl bg-slate-900 border border-slate-800 font-bold">Female</button>
             </div>
-
-            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-4 mb-6 bg-slate-900 rounded-2xl outline-none border border-slate-800 focus:border-blue-500">
-            
-            <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95">Create Profile</button>
+            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-4 mb-6 bg-slate-900 rounded-2xl outline-none border border-slate-800">
+            <button onclick="saveIdentity()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold shadow-lg">Save Profile</button>
         </div>
     </div>
 
     <div id="app-interface">
         <aside class="sidebar-pane">
-            <div id="profile-area" class="p-6 border-b border-white/5"></div>
-
+            <div id="profile-area" class="p-6"></div>
             <div class="p-4">
-                <div class="relative group">
-                    <span class="absolute left-4 top-3.5 text-slate-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </span>
-                    <input id="global-search" type="text" placeholder="Search by Unique ID (SAC-XXXX)" 
-                           class="w-full bg-slate-900/50 border border-white/5 p-3 pl-10 rounded-2xl outline-none focus:border-blue-500 focus:bg-slate-900 transition-all text-sm uppercase"
-                           onkeypress="if(event.key==='Enter') searchUser()">
+                <div class="relative">
+                    <input id="global-search" type="text" placeholder="Search Unique ID (SAC-XXXX)" 
+                           class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 text-sm uppercase">
+                    <button onclick="searchUser()" class="absolute right-2 top-2 bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">FIND</button>
                 </div>
             </div>
-
-            <div class="flex-1 overflow-y-auto px-2 pb-6">
-                <div class="px-4 py-2 flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Messages</span>
-                </div>
-                <div id="recent-chats" class="space-y-1"></div>
-            </div>
+            <div id="recent-chats" class="flex-1 overflow-y-auto px-2 space-y-1"></div>
         </aside>
 
         <main id="chat-pane" class="chat-pane">
             <header class="glass p-3 md:p-4 flex items-center justify-between z-10 shadow-xl">
                 <div class="flex items-center gap-3">
-                    <button onclick="closeChat()" class="p-2 -ml-2 rounded-full hover:bg-white/5 md:hidden">
-                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                    </button>
-                    <div class="relative">
-                        <img id="partner-avatar" src="" class="w-10 h-10 rounded-full bg-slate-800 border border-white/5 hidden">
-                        <div id="online-indicator" class="hidden absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#020617] rounded-full"></div>
-                    </div>
+                    <button onclick="closeChat()" class="p-2 md:hidden"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                    <img id="partner-avatar" src="" class="w-10 h-10 rounded-full hidden">
                     <div>
-                        <p id="chat-partner-name" class="font-bold text-sm text-white">Select a Chat</p>
-                        <p id="chat-status-text" class="text-[10px] text-slate-500 font-medium"></p>
+                        <p id="chat-partner-name" class="font-bold text-sm">Messenger</p>
+                        <p id="chat-status-text" class="text-[10px]"></p>
                     </div>
                 </div>
             </header>
 
-            <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4">
-                <div id="empty-chat" class="h-full flex flex-col items-center justify-center opacity-20">
-                    <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                    <p class="text-sm">Search an ID to start talking</p>
-                </div>
+            <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+
+            <div id="typing-indicator" class="hidden px-6 py-2">
+                <div class="flex gap-1 text-blue-400 items-center"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
             </div>
 
-            <div class="p-4 md:p-6 bg-[#020617]">
-                <div class="glass flex items-center gap-2 p-1.5 rounded-[24px] border border-white/5 shadow-2xl">
-                    <input id="msg-input" type="text" placeholder="Message..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm text-slate-200" onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()" class="bg-blue-600 p-3 rounded-full hover:bg-blue-500 transition-all active:scale-90 shadow-lg shadow-blue-600/40">
+            <div class="p-4 md:p-6">
+                <div class="glass flex items-center gap-2 p-2 rounded-3xl">
+                    <input id="msg-input" type="text" placeholder="Message..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm" 
+                           oninput="sendTyping()" onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" class="bg-blue-600 p-3 rounded-full shadow-lg active:scale-90 transition-all">
                         <svg class="w-5 h-5 text-white transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
                     </button>
                 </div>
@@ -105,188 +84,157 @@
     </div>
 
     <script>
-        let peer, conn, selectedGender = 'male';
-        let myProfile = JSON.parse(localStorage.getItem('myProfile')) || null;
+        let peer, conn, typeTimeout;
+        let myProfile = JSON.parse(localStorage.getItem('myProfile'));
         let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || {};
+        let selectedGender = 'male';
 
         function getAvatar(name, gender) { return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&gender=${gender || 'male'}`; }
-
         function setRegGender(g) {
             selectedGender = g;
-            document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-3 rounded-xl bg-blue-600 text-sm font-bold border border-blue-400' : 'flex-1 py-3 rounded-xl bg-slate-900 text-sm font-bold border border-slate-800';
-            document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-3 rounded-xl bg-pink-600 text-sm font-bold border border-pink-400' : 'flex-1 py-3 rounded-xl bg-slate-900 text-sm font-bold border border-slate-800';
+            document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-3 rounded-xl bg-blue-600 border border-blue-400 font-bold' : 'flex-1 py-3 rounded-xl bg-slate-900 border border-slate-800 font-bold';
+            document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-3 rounded-xl bg-pink-600 border border-pink-400 font-bold' : 'flex-1 py-3 rounded-xl bg-slate-900 border border-slate-800 font-bold';
         }
 
         window.onload = () => {
-            if(!myProfile) {
-                document.getElementById('identity-popup').classList.remove('hidden');
-            } else {
-                initMessenger();
-            }
+            if(!myProfile) document.getElementById('identity-popup').classList.remove('hidden');
+            else initPeer();
         };
 
         function saveIdentity() {
             const name = document.getElementById('reg-name').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
-            if(!name || !phone) return alert("Fill all fields");
-            const sacId = 'SAC-' + Math.floor(1000 + Math.random() * 9000);
-            myProfile = { name, phone, gender: selectedGender, sacId };
+            if(!name || !phone) return alert("All fields required");
+            myProfile = { name, phone, gender: selectedGender, sacId: 'SAC-'+Math.floor(1000+Math.random()*9000) };
             localStorage.setItem('myProfile', JSON.stringify(myProfile));
             location.reload();
         }
 
-        function initMessenger() {
-            renderProfileArea();
-            renderRecentChats();
-            
+        function initPeer() {
+            renderProfile();
+            renderHistory();
             peer = new Peer(myProfile.sacId);
-            
-            peer.on('open', (id) => console.log("Online as:", id));
             
             peer.on('connection', (incoming) => {
                 conn = incoming;
-                setupHandshake();
+                setupChat();
+            });
+
+            peer.on('error', (err) => {
+                if(err.type === 'peer-not-found') {
+                    alert("This SAC-ID doesn't exist on the network!");
+                    document.getElementById('chat-status-text').innerText = "User not found";
+                }
             });
         }
 
         function searchUser() {
             const id = document.getElementById('global-search').value.trim().toUpperCase();
-            if(!id) return;
-            if(id === myProfile.sacId) return alert("You cannot search yourself!");
+            if(!id || id === myProfile.sacId) return;
             
-            openChatWindow(id);
-            document.getElementById('chat-status-text').innerText = "Searching network...";
-            document.getElementById('chat-status-text').classList.add('searching-pulse');
-
-            conn = peer.connect(id);
-            setupHandshake();
-            
-            // Clear search
-            document.getElementById('global-search').value = '';
+            openChat(id);
+            document.getElementById('chat-status-text').innerText = "Connecting...";
+            conn = peer.connect(id, { reliable: true });
+            setupChat();
         }
 
-        function setupHandshake() {
+        function setupChat() {
             conn.on('open', () => {
-                document.getElementById('chat-status-text').innerText = "Active now";
-                document.getElementById('chat-status-text').classList.remove('searching-pulse');
-                document.getElementById('online-indicator').classList.remove('hidden');
-                
-                // Exchange Profile
-                conn.send({ type: 'handshake', profile: myProfile });
+                document.getElementById('chat-status-text').innerText = "Online";
+                conn.send({ type: 'profile', data: myProfile });
             });
 
-            conn.on('data', (data) => {
-                if(data.type === 'handshake') {
-                    chatHistory[conn.peer] = { 
-                        name: data.profile.name, 
-                        gender: data.profile.gender, 
-                        phone: data.profile.phone,
-                        messages: chatHistory[conn.peer]?.messages || [] 
-                    };
-                    updateHeaderUI(data.profile.name, data.profile.gender);
-                    saveAndRefresh();
-                } else if(data.type === 'text') {
-                    appendMessage(data.content, false, chatHistory[conn.peer]?.gender);
-                    saveMessage(conn.peer, data.content, false);
+            conn.on('data', (payload) => {
+                if(payload.type === 'profile') {
+                    chatHistory[conn.peer] = { name: payload.data.name, gender: payload.data.gender, messages: chatHistory[conn.peer]?.messages || [] };
+                    updateUI(payload.data.name, payload.data.gender);
+                    save();
+                } else if(payload.type === 'msg') {
+                    append(payload.content, false);
+                    saveMsg(conn.peer, payload.content, false);
+                } else if(payload.type === 'typing') {
+                    document.getElementById('typing-indicator').classList.toggle('hidden', !payload.isTyping);
                 }
             });
-            
-            conn.on('close', () => {
-                document.getElementById('chat-status-text').innerText = "Offline";
-                document.getElementById('online-indicator').classList.add('hidden');
-            });
+
+            conn.on('close', () => { document.getElementById('chat-status-text').innerText = "Offline"; });
         }
 
-        function openChatWindow(id) {
+        function sendMsg() {
+            const txt = document.getElementById('msg-input').value.trim();
+            if(!txt || !conn || !conn.open) return;
+            
+            conn.send({ type: 'msg', content: txt });
+            append(txt, true);
+            saveMsg(conn.peer, txt, true);
+            document.getElementById('msg-input').value = '';
+            conn.send({ type: 'typing', isTyping: false });
+        }
+
+        function sendTyping() {
+            if(conn && conn.open) {
+                conn.send({ type: 'typing', isTyping: true });
+                clearTimeout(typeTimeout);
+                typeTimeout = setTimeout(() => conn.send({ type: 'typing', isTyping: false }), 2000);
+            }
+        }
+
+        function openChat(id) {
             document.getElementById('chat-pane').classList.add('active');
-            document.getElementById('empty-chat').classList.add('hidden');
             document.getElementById('partner-avatar').classList.remove('hidden');
-            
-            const existing = chatHistory[id];
-            updateHeaderUI(existing?.name || id, existing?.gender || 'male');
-            loadMessages(id);
+            const data = chatHistory[id];
+            updateUI(data?.name || id, data?.gender || 'male');
+            document.getElementById('messages').innerHTML = '';
+            if(data) data.messages.forEach(m => append(m.content, m.isMe));
         }
 
-        function updateHeaderUI(name, gender) {
+        function updateUI(name, gender) {
             document.getElementById('chat-partner-name').innerText = name;
             document.getElementById('partner-avatar').src = getAvatar(name, gender);
         }
 
-        function sendMsg() {
-            const text = document.getElementById('msg-input').value.trim();
-            if(!text || !conn || !conn.open) return;
-            
-            conn.send({ type: 'text', content: text });
-            appendMessage(text, true);
-            saveMessage(conn.peer, text, true);
-            document.getElementById('msg-input').value = '';
-        }
-
-        function saveMessage(id, content, isMe) {
-            if(!chatHistory[id]) chatHistory[id] = { name: id, messages: [] };
-            chatHistory[id].messages.push({ content, isMe, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-            saveAndRefresh();
-        }
-
-        function saveAndRefresh() {
-            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-            renderRecentChats();
-        }
-
-        function loadMessages(id) {
+        function append(content, isMe) {
             const container = document.getElementById('messages');
-            container.innerHTML = '';
-            if(chatHistory[id]) {
-                chatHistory[id].messages.forEach(m => appendMessage(m.content, m.isMe, chatHistory[id].gender));
-            }
-        }
-
-        function appendMessage(content, isMe, gender) {
-            const container = document.getElementById('messages');
-            const wrap = document.createElement('div');
-            wrap.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start items-end gap-2'}`;
-            
-            const avatar = !isMe ? `<img src="${getAvatar('P', gender)}" class="w-6 h-6 rounded-full border border-white/5 shadow-sm mb-1">` : '';
-            wrap.innerHTML = `${avatar}<div class="max-w-[80%] p-3 text-sm shadow-xl ${isMe ? 'bubble-me' : 'bubble-other'}">${content}</div>`;
-            
-            container.appendChild(wrap);
+            const div = document.createElement('div');
+            div.className = `max-w-[80%] p-3 text-sm shadow-md ${isMe ? 'bubble-me' : 'bubble-other'}`;
+            div.innerText = content;
+            container.appendChild(div);
             container.scrollTop = container.scrollHeight;
         }
 
-        function renderRecentChats() {
+        function saveMsg(id, content, isMe) {
+            if(!chatHistory[id]) chatHistory[id] = { name: id, messages: [] };
+            chatHistory[id].messages.push({ content, isMe });
+            save();
+        }
+
+        function save() {
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            renderHistory();
+        }
+
+        function renderHistory() {
             const list = document.getElementById('recent-chats');
             list.innerHTML = '';
-            Object.keys(chatHistory).sort((a,b) => b.messages?.length - a.messages?.length).forEach(id => {
-                const chat = chatHistory[id];
-                const div = document.createElement('div');
-                div.className = "flex items-center gap-3 p-3 mx-2 rounded-2xl cursor-pointer hover:bg-white/5 transition-all active:scale-[0.98]";
-                div.innerHTML = `
-                    <img src="${getAvatar(chat.name, chat.gender)}" class="w-12 h-12 rounded-full border border-white/5">
-                    <div class="flex-1 overflow-hidden">
-                        <p class="font-bold text-sm text-white truncate">${chat.name}</p>
-                        <p class="text-[10px] text-slate-500 font-mono">ID: ${id}</p>
-                    </div>
-                `;
-                div.onclick = () => openChatWindow(id);
-                list.appendChild(div);
+            Object.keys(chatHistory).forEach(id => {
+                const item = document.createElement('div');
+                item.className = "flex items-center gap-3 p-3 rounded-2xl cursor-pointer hover:bg-white/5";
+                item.innerHTML = `<img src="${getAvatar(chatHistory[id].name, chatHistory[id].gender)}" class="w-12 h-12 rounded-full">
+                                  <div class="flex-1 overflow-hidden"><p class="font-bold text-sm text-white truncate">${chatHistory[id].name}</p>
+                                  <p class="text-[10px] text-slate-500 font-mono">${id}</p></div>`;
+                item.onclick = () => { conn = peer.connect(id); setupChat(); openChat(id); };
+                list.appendChild(item);
             });
         }
 
-        function renderProfileArea() {
+        function renderProfile() {
             document.getElementById('profile-area').innerHTML = `
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 p-4 glass rounded-[24px]">
                     <img src="${getAvatar(myProfile.name, myProfile.gender)}" class="w-12 h-12 rounded-full border-2 border-blue-500 p-0.5">
-                    <div class="flex-1 overflow-hidden">
-                        <p class="font-bold text-sm truncate">${myProfile.name}</p>
-                        <p class="text-[10px] text-blue-500 font-mono font-bold">${myProfile.sacId}</p>
-                    </div>
-                    <button onclick="navigator.clipboard.writeText('${myProfile.sacId}');alert('Copied!')" class="p-2 bg-slate-900 rounded-xl border border-white/5">
-                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    </button>
-                </div>
-            `;
+                    <div class="flex-1 overflow-hidden"><p class="font-bold text-sm truncate">${myProfile.name}</p>
+                    <p class="text-[10px] text-blue-500 font-bold">${myProfile.sacId}</p></div>
+                </div>`;
         }
-
         function closeChat() { document.getElementById('chat-pane').classList.remove('active'); }
     </script>
 </body>
