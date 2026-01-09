@@ -10,11 +10,9 @@
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .welcome-overlay { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 100; transition: opacity 1s ease; }
         
-        /* Mobile Sidebar Logic */
         @media (max-width: 768px) {
-            .sidebar { position: fixed; left: -100%; transition: 0.3s; z-index: 40; height: 100%; width: 80%; }
+            .sidebar { position: fixed; left: -100%; transition: 0.3s; z-index: 40; height: 100%; width: 85%; }
             .sidebar.active { left: 0; }
-            .chat-main { width: 100%; }
         }
         
         .typing-dot { width: 4px; height: 4px; background: #60a5fa; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
@@ -26,77 +24,87 @@
 <body class="bg-[#0f172a] text-slate-200 font-sans h-screen overflow-hidden">
 
     <div id="welcome-screen" class="welcome-overlay">
-        <h1 id="welcome-text" class="text-3xl md:text-4xl font-light text-blue-400 animate-pulse tracking-widest uppercase text-center p-4">Welcome to<br>Sachin's World</h1>
+        <h1 id="welcome-text" class="text-3xl font-light text-blue-400 animate-pulse tracking-widest uppercase text-center">Welcome to<br>Sachin's World</h1>
     </div>
 
-    <div id="identity-popup" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-        <div class="glass p-6 md:p-8 rounded-3xl w-full max-w-sm shadow-2xl" onkeypress="if(event.key==='Enter') saveIdentity()">
-            <h2 class="text-xl font-bold mb-4 text-blue-400">Complete Profile</h2>
-            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-3 mb-3 bg-slate-800 rounded-xl border border-slate-700 outline-none">
+    <div id="identity-popup" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="glass p-8 rounded-3xl w-full max-w-sm shadow-2xl" onkeypress="if(event.key==='Enter') saveIdentity()">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">Create Profile</h2>
+            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-3 mb-3 bg-slate-800 rounded-xl border border-slate-700 outline-none focus:border-blue-500">
             
             <div class="flex gap-2 mb-3">
                 <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400 text-sm">Male</button>
                 <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-2 rounded-lg bg-slate-700 text-sm">Female</button>
             </div>
 
-            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-3 mb-6 bg-slate-800 rounded-xl border border-slate-700 outline-none">
-            <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold">Start Chatting</button>
+            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-3 mb-6 bg-slate-800 rounded-xl border border-slate-700 outline-none focus:border-blue-500">
+            <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20">Save & Enter</button>
+            <button onclick="closeReg()" class="w-full mt-2 text-xs text-slate-500 hover:text-white">Maybe Later</button>
         </div>
     </div>
 
     <div id="app-interface" class="hidden flex h-screen w-full">
-        <aside id="sidebar" class="sidebar bg-[#1e293b] md:bg-[#1e293b]/50 flex flex-col w-[300px] border-r border-white/5">
-            <div class="p-6 text-center border-b border-white/5">
-                <img id="my-avatar" src="" class="w-16 h-16 mx-auto rounded-full border-2 border-blue-500 p-1 mb-2 bg-slate-800">
-                <h3 id="sidebar-name" class="font-bold text-lg truncate">Your Name</h3>
-                <p id="sidebar-id" class="text-[10px] text-slate-500 font-mono tracking-tighter">ID: SAC-XXXX</p>
-            </div>
+        <aside id="sidebar" class="sidebar bg-[#111827] md:bg-[#1e293b]/50 flex flex-col w-[320px] border-r border-white/5 shadow-2xl">
+            
+            <div id="profile-area" class="p-8 text-center border-b border-white/5">
+                </div>
 
             <div class="p-4 space-y-2">
-                <button onclick="createRoom()" class="w-full bg-blue-600/20 text-blue-400 p-3 rounded-xl text-sm font-bold border border-blue-500/20 hover:bg-blue-600/30">+ Create Room</button>
-                <button onclick="promptJoin()" class="w-full bg-slate-800/50 p-3 rounded-xl text-sm font-bold border border-white/5 hover:bg-slate-700/50">📥 Join Code</button>
+                <button onclick="createRoom()" class="w-full bg-blue-600/10 text-blue-400 p-3 rounded-xl text-sm font-bold border border-blue-500/20 hover:bg-blue-600/20 transition-all">
+                    + Create New Room
+                </button>
+                <button onclick="promptJoin()" class="w-full bg-slate-800/40 p-3 rounded-xl text-sm font-bold border border-white/5 hover:bg-slate-700/40 transition-all">
+                    📥 Join via Code
+                </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-4">
-                <p class="text-[10px] font-black text-slate-500 uppercase mb-3 ml-2">Recent Chats</p>
+            <div class="flex-1 overflow-y-auto px-4 pb-6">
+                <p class="text-[10px] font-black text-slate-500 uppercase mb-3 ml-2 tracking-widest">Recent Chats</p>
                 <div id="recent-chats" class="space-y-1"></div>
-                <div class="mt-4 pt-4 border-t border-white/5 pb-4">
-                    <input id="search-id" type="text" placeholder="Search SAC-XXXX" class="w-full bg-slate-900/50 p-2 text-xs rounded-lg border border-white/5 outline-none mb-2">
-                    <button onclick="handleAdvancedAction('search')" class="w-full bg-slate-800 py-2 text-xs rounded-lg font-bold">Search ID</button>
+                
+                <div class="mt-6 pt-6 border-t border-white/5">
+                    <div class="flex gap-2">
+                        <input id="search-id" type="text" placeholder="SAC-XXXX" class="flex-1 bg-slate-900/50 p-2 text-xs rounded-lg border border-white/5 outline-none">
+                        <button onclick="handleAdvancedAction('search')" class="bg-blue-600 px-3 py-2 text-[10px] rounded-lg font-bold uppercase">Search</button>
+                    </div>
                 </div>
             </div>
         </aside>
 
-        <main class="chat-main flex-1 flex flex-col bg-[#0f172a] relative">
+        <main class="flex-1 flex flex-col bg-[#020617] relative">
             <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-center p-6">
-                <div class="text-5xl mb-4 opacity-20">💬</div>
-                <h2 class="text-xl font-light opacity-40">Select a room to start chatting</h2>
-                <button onclick="toggleSidebar()" class="md:hidden mt-4 bg-blue-600 px-4 py-2 rounded-lg text-sm">View Contacts</button>
+                <div class="w-20 h-20 bg-blue-500/5 rounded-full flex items-center justify-center mb-4">
+                    <span class="text-4xl opacity-30">💬</span>
+                </div>
+                <h2 class="text-xl font-light opacity-40">Select a room to chat</h2>
+                <button onclick="toggleSidebar()" class="md:hidden mt-6 bg-slate-800 px-6 py-2 rounded-full text-xs font-bold border border-white/10 uppercase tracking-widest">Open Contacts</button>
             </div>
 
-            <header id="active-chat-header" class="hidden glass p-3 md:p-4 flex justify-between items-center z-10">
+            <header id="active-chat-header" class="hidden glass p-4 flex justify-between items-center z-10">
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleSidebar()" class="md:hidden text-xl pr-2">☰</button>
-                    <img id="partner-avatar" src="" class="w-10 h-10 rounded-full bg-slate-800">
+                    <button onclick="toggleSidebar()" class="md:hidden p-2 bg-white/5 rounded-lg text-lg">☰</button>
+                    <img id="partner-avatar" src="" class="w-10 h-10 rounded-full bg-slate-800 border border-white/10">
                     <div>
-                        <p id="chat-partner-name" class="font-bold text-sm leading-none">Partner Name</p>
-                        <p id="chat-status-text" class="text-[10px] text-slate-500 font-bold uppercase mt-1">Connecting...</p>
+                        <p id="chat-partner-name" class="font-bold text-sm leading-none">Connecting...</p>
+                        <p id="chat-status-text" class="text-[9px] text-blue-400 font-bold uppercase mt-1 tracking-widest">Waiting</p>
                     </div>
                 </div>
-                <button onclick="location.reload()" class="text-[10px] bg-white/5 px-3 py-2 rounded-lg font-bold">EXIT</button>
+                <button onclick="location.reload()" class="text-[10px] bg-red-500/10 text-red-400 px-4 py-2 rounded-full font-black border border-red-500/20">EXIT</button>
             </header>
 
-            <div id="messages" class="hidden flex-1 overflow-y-auto p-4 md:p-6 space-y-4"></div>
+            <div id="messages" class="hidden flex-1 overflow-y-auto p-4 md:p-8 space-y-4"></div>
 
-            <div id="typing-buddy" class="hidden px-6 py-2 flex items-center gap-2">
-                <div class="glass px-3 py-2 rounded-2xl rounded-tl-none flex gap-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+            <div id="typing-buddy" class="hidden px-8 py-2 flex items-center gap-2">
+                <div class="glass px-3 py-2 rounded-2xl rounded-tl-none flex gap-1">
+                    <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+                </div>
             </div>
 
-            <div id="input-area" class="hidden p-4 md:p-6">
-                <div class="glass flex items-center gap-2 p-1.5 rounded-2xl">
+            <div id="input-area" class="hidden p-4 md:p-8">
+                <div class="glass flex items-center gap-2 p-2 rounded-2xl shadow-2xl">
                     <input id="msg-input" type="text" placeholder="Type a message..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm" oninput="emitTyping()" onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()" class="bg-blue-600 p-2.5 rounded-xl hover:bg-blue-500 transition-all">
-                        <svg class="w-5 h-5 text-white transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
+                    <button onclick="sendMsg()" class="bg-blue-600 p-3 rounded-xl hover:bg-blue-500 transition-transform active:scale-95 shadow-lg shadow-blue-900/40">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                     </button>
                 </div>
             </div>
@@ -109,14 +117,43 @@
         let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || {};
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function openReg() { document.getElementById('identity-popup').classList.remove('hidden'); }
+        function closeReg() { document.getElementById('identity-popup').classList.add('hidden'); }
+        
         function setRegGender(g) {
             selectedGender = g;
-            document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
-            document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-2 rounded-lg bg-pink-600 border border-pink-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
+            document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400 text-sm' : 'flex-1 py-2 rounded-lg bg-slate-700 text-sm';
+            document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-2 rounded-lg bg-pink-600 border border-pink-400 text-sm' : 'flex-1 py-2 rounded-lg bg-slate-700 text-sm';
         }
+
         function getAvatar(name, gender) { return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&gender=${gender === 'female' ? 'female' : 'male'}`; }
 
+        function renderProfileArea() {
+            const area = document.getElementById('profile-area');
+            if (myProfile) {
+                area.innerHTML = `
+                    <div class="relative inline-block mb-4">
+                        <img src="${getAvatar(myProfile.name, myProfile.gender)}" class="w-20 h-20 mx-auto rounded-full border-2 border-blue-500 p-1 bg-slate-800">
+                        <div class="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-[#111827] rounded-full"></div>
+                    </div>
+                    <h3 class="font-bold text-lg truncate">${myProfile.name}</h3>
+                    <p class="text-[10px] text-slate-500 font-mono mt-1 opacity-70">ID: ${myProfile.sacId}</p>
+                `;
+            } else {
+                area.innerHTML = `
+                    <div onclick="openReg()" class="cursor-pointer group">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-slate-800 flex items-center justify-center border-2 border-dashed border-slate-600 group-hover:border-blue-500 transition-all">
+                            <span class="text-2xl opacity-50">+</span>
+                        </div>
+                        <h3 class="mt-4 font-bold text-sm group-hover:text-blue-400">Register Now</h3>
+                        <p class="text-[10px] text-slate-500 mt-1">Unlock IDs & History</p>
+                    </div>
+                `;
+            }
+        }
+
         window.onload = () => {
+            renderProfileArea();
             const speak = () => {
                 const text = myProfile ? `Welcome back, ${myProfile.name}` : "Welcome to Sachin's world";
                 const msg = new SpeechSynthesisUtterance(text);
@@ -131,8 +168,8 @@
                     document.getElementById('welcome-screen').classList.add('hidden');
                     document.getElementById('app-interface').classList.remove('hidden');
                     initPeer();
-                    if(myProfile) updateSidebar();
-                }, 1000);
+                    renderRecentChats();
+                }, 800);
             }, 2500);
         };
 
@@ -141,17 +178,10 @@
             peer.on('connection', (c) => { conn = c; setupConnection(); });
         }
 
-        function updateSidebar() {
-            document.getElementById('sidebar-name').innerText = myProfile.name;
-            document.getElementById('sidebar-id').innerText = `ID: ${myProfile.sacId}`;
-            document.getElementById('my-avatar').src = getAvatar(myProfile.name, myProfile.gender);
-            renderRecentChats();
-        }
-
         function saveIdentity() {
             const name = document.getElementById('reg-name').value.trim();
             const phone = document.getElementById('reg-phone').value.trim();
-            if(!name || !phone) return alert("Please fill all details");
+            if(!name || !phone) return alert("Details required");
             myProfile = { name, phone, gender: selectedGender, sacId: 'SAC-'+Math.floor(1000+Math.random()*9000) };
             localStorage.setItem('myProfile', JSON.stringify(myProfile));
             location.reload();
@@ -182,7 +212,7 @@
         function openRecentChat(id) {
             if(window.innerWidth < 768) toggleSidebar();
             toggleChatView(true);
-            loadHistory(id); // Load history immediately like WhatsApp
+            loadHistory(id); 
             document.getElementById('chat-status-text').innerText = "Connecting...";
             conn = peer.connect(id);
             setupConnection();
@@ -227,11 +257,11 @@
         function renderRecentChats() {
             const list = document.getElementById('recent-chats');
             list.innerHTML = '';
-            Object.keys(chatHistory).sort((a,b) => b.time - a.time).forEach(id => {
+            Object.keys(chatHistory).forEach(id => {
                 const b = document.createElement('div');
                 b.className = "flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-all";
                 b.innerHTML = `<img src="${getAvatar(chatHistory[id].name, chatHistory[id].gender)}" class="w-10 h-10 rounded-full bg-slate-800">
-                               <div class="flex-1 overflow-hidden"><p class="text-sm font-bold truncate">${chatHistory[id].name}</p><p class="text-[10px] text-slate-500 font-mono">${id}</p></div>`;
+                               <div class="flex-1 overflow-hidden"><p class="text-sm font-bold truncate">${chatHistory[id].name}</p><p class="text-[9px] text-slate-500 font-mono">${id}</p></div>`;
                 b.onclick = () => openRecentChat(id);
                 list.appendChild(b);
             });
@@ -242,19 +272,19 @@
             const wrapper = document.createElement('div');
             wrapper.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
             const t = time || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            wrapper.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] px-4 py-2 rounded-2xl ${isMe ? 'bg-blue-600 rounded-tr-none' : 'glass rounded-tl-none'} text-sm">
-                ${text}<p class="text-[8px] opacity-50 mt-1 text-right">${t}</p></div>`;
+            wrapper.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] px-4 py-2.5 rounded-2xl ${isMe ? 'bg-blue-600 rounded-tr-none shadow-lg' : 'glass rounded-tl-none'} text-sm leading-relaxed">
+                ${text}<p class="text-[8px] opacity-40 mt-1 text-right">${t}</p></div>`;
             container.appendChild(wrapper);
             container.scrollTop = container.scrollHeight;
         }
 
         function createRoom() {
             const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            alert("Room Code: " + code);
+            alert("Room Code Generated: " + code);
             toggleChatView(true);
-            document.getElementById('chat-partner-name').innerText = "Room Created";
-            document.getElementById('chat-status-text').innerText = "Share Code: " + code;
-            if(!myProfile) setTimeout(() => { if(!myProfile) document.getElementById('identity-popup').classList.remove('hidden'); }, 60000);
+            document.getElementById('chat-partner-name').innerText = "In Room";
+            document.getElementById('chat-status-text').innerText = "Code: " + code;
+            if(!myProfile) setTimeout(() => { if(!myProfile) openReg(); }, 60000);
         }
 
         function promptJoin() {
@@ -263,7 +293,7 @@
         }
 
         function handleAdvancedAction(type) {
-            if(!myProfile) return document.getElementById('identity-popup').classList.remove('hidden');
+            if(!myProfile) return openReg();
             const id = document.getElementById('search-id').value.toUpperCase().trim();
             if(id) openRecentChat(id);
         }
