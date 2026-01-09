@@ -3,171 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private P2P Chat</title>
+    <title>Sachin's Private Messenger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        .welcome-overlay {
+            position: fixed;
+            inset: 0;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 1s ease-out;
+        }
+    </style>
 </head>
 <body class="bg-slate-900 text-white font-sans">
 
-    <div id="setup-screen" class="flex flex-col items-center justify-center h-screen">
-        <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-sm">
-            <h1 class="text-2xl font-bold text-center mb-6 text-blue-400">🔒 Private Room</h1>
-            
-            <button onclick="createRoom()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-semibold transition-all mb-4">
-                Create New Room
-            </button>
-            
-            <div class="flex items-center my-4">
-                <hr class="flex-grow border-slate-600">
-                <span class="px-3 text-slate-500 text-sm">OR</span>
-                <hr class="flex-grow border-slate-600">
-            </div>
+    <div id="welcome-screen" class="welcome-overlay">
+        <h1 class="text-4xl font-bold text-blue-400 animate-pulse text-center">
+            Welcome to<br>Sachin's World
+        </h1>
+    </div>
 
-            <input id="room-input" type="text" placeholder="Enter 6-digit code" 
-                class="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 focus:border-blue-500 outline-none mb-3 text-center tracking-widest font-mono">
+    <div id="setup-screen" class="hidden flex flex-col items-center justify-center h-screen">
+        <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md text-center">
+            <h1 class="text-2xl font-bold mb-2 text-blue-400">P2P Messenger</h1>
+            <p id="my-unique-id" class="text-xs text-slate-400 mb-6 font-mono"></p>
             
-            <button onclick="joinRoom()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg font-semibold transition-all">
-                Join Room
+            <input id="search-id" type="text" placeholder="Search Unique ID to chat..." 
+                class="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 focus:border-blue-500 outline-none mb-3 text-center font-mono">
+            
+            <button onclick="joinRoom()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-lg font-semibold transition-all mb-4">
+                Start Chatting
             </button>
+
+            <div class="text-left border-t border-slate-700 pt-4">
+                <p class="text-sm font-bold text-slate-300 mb-2">Recent Chats</p>
+                <div id="recent-chats" class="space-y-2"></div>
+            </div>
         </div>
     </div>
 
-    <div id="chat-screen" class="hidden flex flex-col h-screen max-w-2xl mx-auto bg-slate-800 shadow-2xl">
-        <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50 backdrop-blur-md sticky top-0">
-            <div>
-                <p class="text-xs text-slate-400 uppercase tracking-wider">Active Room</p>
-                <p id="display-code" class="font-mono text-xl text-blue-400 font-bold"></p>
+    <div id="identity-popup" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-800 p-6 rounded-xl w-full max-w-sm border border-blue-500">
+            <h2 class="text-xl font-bold mb-4">Complete Your Profile</h2>
+            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-2 mb-3 bg-slate-700 rounded border border-slate-600">
+            <input id="reg-phone" type="text" placeholder="Your Phone Number" class="w-full p-2 mb-3 bg-slate-700 rounded border border-slate-600">
+            <div class="flex items-center gap-2 mb-4">
+                <input type="checkbox" id="show-phone">
+                <label for="show-phone" class="text-xs">Show number to others?</label>
             </div>
-            <button onclick="shareNumber()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-full text-sm font-medium border border-slate-600 transition-all">
-                📱 Share Number
-            </button>
+            <button onclick="saveIdentity()" class="w-full bg-blue-600 p-2 rounded font-bold">Save & Continue</button>
+        </div>
+    </div>
+
+    <div id="chat-screen" class="hidden flex flex-col h-screen max-w-2xl mx-auto bg-slate-800">
+        <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+            <div>
+                <p id="chatting-with-name" class="font-bold text-blue-400">Chatting...</p>
+                <p id="chatting-with-info" class="text-xs text-slate-400"></p>
+            </div>
+            <button onclick="location.reload()" class="text-xs bg-slate-700 px-3 py-1 rounded">Back</button>
         </div>
         
-        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
-            <div id="waiting-msg" class="text-center text-slate-500 text-sm my-4">Waiting for partner to join...</div>
-        </div>
+        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
 
         <div class="p-4 bg-slate-900/50">
             <div class="flex gap-2 bg-slate-700 p-2 rounded-xl border border-slate-600">
-                <input id="msg-input" type="text" placeholder="Type a message..." 
-                    class="flex-1 bg-transparent px-2 outline-none" onkeypress="if(event.key==='Enter') sendMsg()">
-                <button onclick="sendMsg()" class="bg-blue-600 hover:bg-blue-500 p-2 px-6 rounded-lg font-bold transition-all">
-                    Send
-                </button>
+                <input id="msg-input" type="text" placeholder="Type a message..." class="flex-1 bg-transparent px-2 outline-none">
+                <button onclick="sendMsg()" class="bg-blue-600 p-2 px-6 rounded-lg font-bold">Send</button>
             </div>
         </div>
     </div>
 
     <script>
-        let peer;
-        let conn;
-        let isHost = false;
+        let peer, conn;
+        let myProfile = JSON.parse(localStorage.getItem('myProfile')) || null;
+        let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || {};
+        let activePeerId = null;
 
-        function createRoom() {
-            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            isHost = true;
-            initPeer(code);
-        }
+        // 3. Welcome Animation & Sound Logic
+        window.onload = () => {
+            const msg = new SpeechSynthesisUtterance("Welcome to Sachin's world");
+            window.speechSynthesis.speak(msg);
 
-        function joinRoom() {
-            const code = document.getElementById('room-input').value.toUpperCase();
-            if(code.length < 3) return alert("Enter a valid code");
-            isHost = false;
-            initPeer(null, code); 
-        }
+            setTimeout(() => {
+                document.getElementById('welcome-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('welcome-screen').classList.add('hidden');
+                    document.getElementById('setup-screen').classList.remove('hidden');
+                    initMessenger();
+                }, 1000);
+            }, 2500);
+        };
 
-        function initPeer(myId, targetId = null) {
-            // Initialize Peer with Google STUN servers for better connectivity
-            const config = {
-                config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]}
-            };
+        function initMessenger() {
+            // 2. Persistent Unique ID logic
+            let savedId = localStorage.getItem('myUniqueId');
+            if (!savedId) {
+                savedId = 'SAC-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                localStorage.setItem('myUniqueId', savedId);
+            }
             
-            peer = myId ? new Peer(myId, config) : new Peer(config);
-
-            peer.on('open', (id) => {
-                document.getElementById('setup-screen').classList.add('hidden');
-                document.getElementById('chat-screen').classList.remove('hidden');
-                document.getElementById('display-code').innerText = myId || id;
-                
-                if(!isHost && targetId) {
-                    connectToPeer(targetId);
-                }
+            document.getElementById('my-unique-id').innerText = "Your ID: " + savedId;
+            peer = new Peer(savedId, {
+                config: {'iceServers': [{ url: 'stun:stun.l.google.com:19302' }]}
             });
 
-            // If someone connects to us (Host side)
+            peer.on('open', (id) => renderRecentChats());
+
             peer.on('connection', (connection) => {
-                if (conn) {
-                    connection.on('open', () => {
-                        connection.send({system: true, text: "Room is full"});
-                        setTimeout(() => connection.close(), 500);
-                    });
-                    return;
-                }
                 conn = connection;
+                activePeerId = conn.peer;
                 setupConnection();
             });
 
-            peer.on('error', (err) => {
-                alert("Error: " + err.type);
-                location.reload();
-            });
+            // 1. Timer for compulsory info
+            if (!myProfile) {
+                setTimeout(() => {
+                    document.getElementById('identity-popup').classList.remove('hidden');
+                }, 60000); // 1 minute
+            }
         }
 
-        function connectToPeer(targetId) {
+        function saveIdentity() {
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            const show = document.getElementById('show-phone').checked;
+            
+            if (!name || !phone) return alert("All fields are compulsory");
+            
+            myProfile = { name, phone, show };
+            localStorage.setItem('myProfile', JSON.stringify(myProfile));
+            document.getElementById('identity-popup').classList.add('hidden');
+            
+            if (conn) conn.send({ type: 'identity', profile: myProfile });
+        }
+
+        function joinRoom() {
+            const targetId = document.getElementById('search-id').value.toUpperCase();
+            if (!targetId) return;
+            activePeerId = targetId;
             conn = peer.connect(targetId);
             setupConnection();
         }
 
         function setupConnection() {
             conn.on('open', () => {
-                document.getElementById('waiting-msg').innerText = "Connected! You can now chat.";
-                document.getElementById('waiting-msg').classList.add('text-emerald-400');
+                document.getElementById('setup-screen').classList.add('hidden');
+                document.getElementById('chat-screen').classList.remove('hidden');
+                
+                // Share identity if saved
+                if (myProfile) conn.send({ type: 'identity', profile: myProfile });
+                
+                loadHistory(activePeerId);
             });
 
             conn.on('data', (data) => {
-                if(data.system) {
-                    alert(data.text);
-                    location.reload();
+                if (data.type === 'identity') {
+                    document.getElementById('chatting-with-name').innerText = data.profile.name;
+                    document.getElementById('chatting-with-info').innerText = data.profile.show ? data.profile.phone : "Phone Private";
+                    saveToHistory(activePeerId, data.profile.name, null, false); // Update name in history
                 } else {
                     appendMessage(data.text, 'other');
+                    saveToHistory(activePeerId, null, data.text, false);
                 }
             });
-
-            conn.on('close', () => {
-                alert("Partner left. Room closed.");
-                location.reload();
-            });
         }
 
-        function sendMsg(customText = null) {
+        function sendMsg() {
             const input = document.getElementById('msg-input');
-            const text = customText || input.value.trim();
-            
-            if(!text || !conn) return;
+            const text = input.value.trim();
+            if (!text || !conn) return;
 
-            conn.send({text: text});
+            conn.send({ type: 'chat', text: text });
             appendMessage(text, 'me');
-            if(!customText) input.value = "";
+            saveToHistory(activePeerId, null, text, true);
+            input.value = "";
         }
 
-        function shareNumber() {
-            const num = prompt("Enter your number to share:");
-            if(num) sendMsg("📱 My Number: " + num);
+        // 2. Chat Persistence Logic
+        function saveToHistory(peerId, name, text, isMe) {
+            if (!chatHistory[peerId]) chatHistory[peerId] = { name: name || peerId, messages: [] };
+            if (name) chatHistory[peerId].name = name;
+            if (text) chatHistory[peerId].messages.push({ text, isMe, time: new Date() });
+            
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            renderRecentChats();
+        }
+
+        function loadHistory(peerId) {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
+            if (chatHistory[peerId]) {
+                document.getElementById('chatting-with-name').innerText = chatHistory[peerId].name;
+                chatHistory[peerId].messages.forEach(m => appendMessage(m.text, m.isMe ? 'me' : 'other'));
+            }
+        }
+
+        function renderRecentChats() {
+            const list = document.getElementById('recent-chats');
+            list.innerHTML = '';
+            Object.keys(chatHistory).forEach(id => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 bg-slate-700/50 rounded hover:bg-slate-700 transition";
+                btn.innerHTML = `<p class="font-bold">${chatHistory[id].name}</p><p class="text-[10px] text-slate-400">${id}</p>`;
+                btn.onclick = () => {
+                    document.getElementById('search-id').value = id;
+                    joinRoom();
+                };
+                list.appendChild(btn);
+            });
         }
 
         function appendMessage(text, sender) {
             const container = document.getElementById('messages');
             const wrapper = document.createElement('div');
             wrapper.className = `flex ${sender === 'me' ? 'justify-end' : 'justify-start'}`;
-            
             const msgDiv = document.createElement('div');
-            msgDiv.className = `max-w-[80%] px-4 py-2 rounded-2xl shadow-sm ${
-                sender === 'me' 
-                ? 'bg-blue-600 text-white rounded-tr-none' 
-                : 'bg-slate-700 text-slate-100 rounded-tl-none border border-slate-600'
-            }`;
+            msgDiv.className = `max-w-[80%] px-4 py-2 rounded-2xl ${sender === 'me' ? 'bg-blue-600' : 'bg-slate-700'}`;
             msgDiv.innerText = text;
-            
             wrapper.appendChild(msgDiv);
             container.appendChild(wrapper);
             container.scrollTop = container.scrollHeight;
