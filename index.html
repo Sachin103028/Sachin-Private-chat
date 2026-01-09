@@ -9,7 +9,14 @@
     <style>
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .welcome-overlay { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 100; transition: opacity 1s ease; }
-        .sidebar { width: 300px; border-right: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Mobile Sidebar Logic */
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -100%; transition: 0.3s; z-index: 40; height: 100%; width: 80%; }
+            .sidebar.active { left: 0; }
+            .chat-main { width: 100%; }
+        }
+        
         .typing-dot { width: 4px; height: 4px; background: #60a5fa; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
@@ -19,91 +26,76 @@
 <body class="bg-[#0f172a] text-slate-200 font-sans h-screen overflow-hidden">
 
     <div id="welcome-screen" class="welcome-overlay">
-        <h1 id="welcome-text" class="text-4xl font-light text-blue-400 animate-pulse tracking-widest uppercase text-center">Welcome to<br>Sachin's World</h1>
+        <h1 id="welcome-text" class="text-3xl md:text-4xl font-light text-blue-400 animate-pulse tracking-widest uppercase text-center p-4">Welcome to<br>Sachin's World</h1>
     </div>
 
-    <div id="identity-popup" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-        <div class="glass p-8 rounded-3xl w-full max-w-sm shadow-2xl">
-            <h2 class="text-xl font-bold mb-4 text-blue-400">Identify Yourself</h2>
-            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-3 mb-3 bg-slate-800/50 rounded-xl border border-slate-700 outline-none focus:border-blue-500">
+    <div id="identity-popup" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+        <div class="glass p-6 md:p-8 rounded-3xl w-full max-w-sm shadow-2xl" onkeypress="if(event.key==='Enter') saveIdentity()">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">Complete Profile</h2>
+            <input id="reg-name" type="text" placeholder="Your Name" class="w-full p-3 mb-3 bg-slate-800 rounded-xl border border-slate-700 outline-none">
             
             <div class="flex gap-2 mb-3">
-                <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-2 rounded-lg bg-slate-700 border border-transparent hover:border-blue-500 transition-all text-sm">Male</button>
-                <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-2 rounded-lg bg-slate-700 border border-transparent hover:border-pink-500 transition-all text-sm">Female</button>
+                <button onclick="setRegGender('male')" id="btn-male" class="flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400 text-sm">Male</button>
+                <button onclick="setRegGender('female')" id="btn-female" class="flex-1 py-2 rounded-lg bg-slate-700 text-sm">Female</button>
             </div>
 
-            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-3 mb-4 bg-slate-800/50 rounded-xl border border-slate-700 outline-none">
-            <div class="flex items-center gap-3 mb-6 bg-blue-500/10 p-3 rounded-xl">
-                <input type="checkbox" id="show-phone" checked class="w-5 h-5 accent-blue-500">
-                <label for="show-phone" class="text-xs">Show number to partner</label>
-            </div>
-            <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all shadow-lg">Enter Messenger</button>
+            <input id="reg-phone" type="tel" placeholder="Mobile Number" class="w-full p-3 mb-6 bg-slate-800 rounded-xl border border-slate-700 outline-none">
+            <button onclick="saveIdentity()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold">Start Chatting</button>
         </div>
     </div>
 
-    <div id="app-interface" class="hidden flex h-screen">
-        <aside class="sidebar flex flex-col bg-[#1e293b]/50">
+    <div id="app-interface" class="hidden flex h-screen w-full">
+        <aside id="sidebar" class="sidebar bg-[#1e293b] md:bg-[#1e293b]/50 flex flex-col w-[300px] border-r border-white/5">
             <div class="p-6 text-center border-b border-white/5">
-                <div class="relative inline-block mb-4">
-                    <img id="my-avatar" src="" class="w-20 h-20 rounded-full border-2 border-blue-500 p-1 bg-slate-800">
-                    <div class="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-[#1e293b] rounded-full"></div>
-                </div>
-                <h3 id="sidebar-name" class="font-bold text-lg leading-tight">Your Name</h3>
-                <p id="sidebar-id" class="text-xs text-slate-500 font-mono mt-1">ID: SAC-XXXX</p>
+                <img id="my-avatar" src="" class="w-16 h-16 mx-auto rounded-full border-2 border-blue-500 p-1 mb-2 bg-slate-800">
+                <h3 id="sidebar-name" class="font-bold text-lg truncate">Your Name</h3>
+                <p id="sidebar-id" class="text-[10px] text-slate-500 font-mono tracking-tighter">ID: SAC-XXXX</p>
             </div>
 
             <div class="p-4 space-y-2">
-                <button onclick="createRoom()" class="w-full flex items-center gap-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 p-3 rounded-xl border border-blue-500/20">
-                    <span class="text-xl">+</span> <span class="text-sm font-semibold">Create Room</span>
-                </button>
-                <button onclick="promptJoin()" class="w-full flex items-center gap-3 bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-xl border border-white/5">
-                    <span class="text-xl">📥</span> <span class="text-sm font-semibold text-slate-300">Join Room</span>
-                </button>
+                <button onclick="createRoom()" class="w-full bg-blue-600/20 text-blue-400 p-3 rounded-xl text-sm font-bold border border-blue-500/20 hover:bg-blue-600/30">+ Create Room</button>
+                <button onclick="promptJoin()" class="w-full bg-slate-800/50 p-3 rounded-xl text-sm font-bold border border-white/5 hover:bg-slate-700/50">📥 Join Code</button>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-4 pb-4">
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Recent Chats</p>
+            <div class="flex-1 overflow-y-auto px-4">
+                <p class="text-[10px] font-black text-slate-500 uppercase mb-3 ml-2">Recent Chats</p>
                 <div id="recent-chats" class="space-y-1"></div>
-                
-                <div class="mt-4 pt-4 border-t border-white/5">
+                <div class="mt-4 pt-4 border-t border-white/5 pb-4">
                     <input id="search-id" type="text" placeholder="Search SAC-XXXX" class="w-full bg-slate-900/50 p-2 text-xs rounded-lg border border-white/5 outline-none mb-2">
                     <button onclick="handleAdvancedAction('search')" class="w-full bg-slate-800 py-2 text-xs rounded-lg font-bold">Search ID</button>
                 </div>
             </div>
         </aside>
 
-        <main id="chat-area" class="flex-1 flex flex-col relative bg-[#0f172a]">
-            <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-center opacity-40">
-                <div class="text-6xl mb-4">💬</div>
-                <h2 class="text-2xl font-light">Select a room to start chatting</h2>
+        <main class="chat-main flex-1 flex flex-col bg-[#0f172a] relative">
+            <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-center p-6">
+                <div class="text-5xl mb-4 opacity-20">💬</div>
+                <h2 class="text-xl font-light opacity-40">Select a room to start chatting</h2>
+                <button onclick="toggleSidebar()" class="md:hidden mt-4 bg-blue-600 px-4 py-2 rounded-lg text-sm">View Contacts</button>
             </div>
 
-            <div id="active-chat-header" class="hidden glass p-4 flex justify-between items-center">
+            <header id="active-chat-header" class="hidden glass p-3 md:p-4 flex justify-between items-center z-10">
                 <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden text-xl pr-2">☰</button>
                     <img id="partner-avatar" src="" class="w-10 h-10 rounded-full bg-slate-800">
                     <div>
-                        <p id="chat-partner-name" class="font-bold text-sm">Partner Name</p>
-                        <div class="flex items-center gap-1.5">
-                            <div id="status-dot" class="w-2 h-2 bg-slate-500 rounded-full"></div>
-                            <p id="chat-status-text" class="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Connecting...</p>
-                        </div>
+                        <p id="chat-partner-name" class="font-bold text-sm leading-none">Partner Name</p>
+                        <p id="chat-status-text" class="text-[10px] text-slate-500 font-bold uppercase mt-1">Connecting...</p>
                     </div>
                 </div>
-                <button onclick="location.reload()" class="bg-white/5 hover:bg-white/10 p-2 rounded-lg text-xs font-bold">EXIT CHAT</button>
-            </div>
+                <button onclick="location.reload()" class="text-[10px] bg-white/5 px-3 py-2 rounded-lg font-bold">EXIT</button>
+            </header>
 
-            <div id="messages" class="hidden flex-1 overflow-y-auto p-6 space-y-4"></div>
+            <div id="messages" class="hidden flex-1 overflow-y-auto p-4 md:p-6 space-y-4"></div>
 
             <div id="typing-buddy" class="hidden px-6 py-2 flex items-center gap-2">
-                <div class="glass px-3 py-2 rounded-2xl rounded-tl-none flex gap-1">
-                    <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
-                </div>
+                <div class="glass px-3 py-2 rounded-2xl rounded-tl-none flex gap-1"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
             </div>
 
-            <div id="input-area" class="hidden p-6">
-                <div class="glass flex items-center gap-2 p-2 rounded-2xl">
-                    <input id="msg-input" type="text" placeholder="Type a message..." class="flex-1 bg-transparent px-4 py-2 outline-none" oninput="emitTyping()">
-                    <button onclick="sendMsg()" class="bg-blue-600 p-3 rounded-xl hover:bg-blue-500">
+            <div id="input-area" class="hidden p-4 md:p-6">
+                <div class="glass flex items-center gap-2 p-1.5 rounded-2xl">
+                    <input id="msg-input" type="text" placeholder="Type a message..." class="flex-1 bg-transparent px-4 py-2 outline-none text-sm" oninput="emitTyping()" onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" class="bg-blue-600 p-2.5 rounded-xl hover:bg-blue-500 transition-all">
                         <svg class="w-5 h-5 text-white transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
                     </button>
                 </div>
@@ -116,23 +108,20 @@
         let myProfile = JSON.parse(localStorage.getItem('myProfile')) || null;
         let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || {};
 
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
         function setRegGender(g) {
             selectedGender = g;
             document.getElementById('btn-male').className = g === 'male' ? 'flex-1 py-2 rounded-lg bg-blue-600 border border-blue-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
             document.getElementById('btn-female').className = g === 'female' ? 'flex-1 py-2 rounded-lg bg-pink-600 border border-pink-400' : 'flex-1 py-2 rounded-lg bg-slate-700';
         }
-
-        function getAvatar(name, gender) {
-            return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&gender=${gender === 'female' ? 'female' : 'male'}`;
-        }
+        function getAvatar(name, gender) { return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&gender=${gender === 'female' ? 'female' : 'male'}`; }
 
         window.onload = () => {
             const speak = () => {
                 const text = myProfile ? `Welcome back, ${myProfile.name}` : "Welcome to Sachin's world";
                 const msg = new SpeechSynthesisUtterance(text);
-                const voices = window.speechSynthesis.getVoices();
-                msg.voice = voices.find(v => v.name.includes('Female')) || voices[0];
-                window.speechSynthesis.speak(msg);
+                msg.voice = speechSynthesis.getVoices().find(v => v.name.includes('Female')) || null;
+                speechSynthesis.speak(msg);
             };
             if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = speak; else speak();
 
@@ -148,12 +137,8 @@
         };
 
         function initPeer() {
-            const myId = myProfile ? myProfile.sacId : null;
-            peer = myId ? new Peer(myId) : new Peer();
-            peer.on('connection', (c) => { 
-                conn = c; 
-                setupConnection(); 
-            });
+            peer = new Peer(myProfile ? myProfile.sacId : null);
+            peer.on('connection', (c) => { conn = c; setupConnection(); });
         }
 
         function updateSidebar() {
@@ -164,10 +149,10 @@
         }
 
         function saveIdentity() {
-            const name = document.getElementById('reg-name').value;
-            const phone = document.getElementById('reg-phone').value;
-            if(!name || !phone) return alert("Fill everything");
-            myProfile = { name, phone, gender: selectedGender, show: document.getElementById('show-phone').checked, sacId: 'SAC-'+Math.floor(1000+Math.random()*9000) };
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            if(!name || !phone) return alert("Please fill all details");
+            myProfile = { name, phone, gender: selectedGender, sacId: 'SAC-'+Math.floor(1000+Math.random()*9000) };
             localStorage.setItem('myProfile', JSON.stringify(myProfile));
             location.reload();
         }
@@ -176,65 +161,31 @@
             conn.on('open', () => {
                 toggleChatView(true);
                 if(myProfile) conn.send({type: 'identity', profile: myProfile});
+                document.getElementById('chat-status-text').innerText = "Online";
                 loadHistory(conn.peer);
-                updateStatus('active');
             });
-
             conn.on('data', (data) => {
                 if(data.type === 'identity') {
                     document.getElementById('chat-partner-name').innerText = data.profile.name;
                     document.getElementById('partner-avatar').src = getAvatar(data.profile.name, data.profile.gender);
                     saveToHistory(conn.peer, data.profile.name, data.profile.gender, null, false);
                 } else if(data.type === 'typing') {
-                    showTyping(data.isTyping);
+                    document.getElementById('typing-buddy').classList.toggle('hidden', !data.isTyping);
                 } else {
                     appendMessage(data.text, 'other');
                     saveToHistory(conn.peer, null, null, data.text, false);
                 }
             });
-            conn.on('close', () => updateStatus('disconnected'));
+            conn.on('close', () => { document.getElementById('chat-status-text').innerText = "Offline"; });
         }
 
-        function emitTyping() {
-            if(conn && conn.open) {
-                conn.send({type: 'typing', isTyping: true});
-                clearTimeout(typingTimeout);
-                typingTimeout = setTimeout(() => conn.send({type: 'typing', isTyping: false}), 2000);
-            }
-        }
-
-        function showTyping(isTyping) {
-            document.getElementById('typing-buddy').classList.toggle('hidden', !isTyping);
-            document.getElementById('chat-status-text').innerText = isTyping ? "Typing..." : "Active Now";
-            const container = document.getElementById('messages');
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function updateStatus(state) {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('chat-status-text');
-            if(state === 'active') { dot.className = 'w-2 h-2 bg-emerald-500 rounded-full'; text.innerText = 'Active Now'; }
-            else { dot.className = 'w-2 h-2 bg-red-500 rounded-full'; text.innerText = 'Offline'; }
-        }
-
-        function createRoom() {
-            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-            alert("Share this Room Code: " + code);
+        function openRecentChat(id) {
+            if(window.innerWidth < 768) toggleSidebar();
             toggleChatView(true);
-            document.getElementById('chat-partner-name').innerText = "Waiting...";
-            document.getElementById('chat-status-text').innerText = "Code: " + code;
-            if(!myProfile) setTimeout(() => { if(!myProfile) document.getElementById('identity-popup').classList.remove('hidden'); }, 60000);
-        }
-
-        function promptJoin() {
-            const code = prompt("Enter Code:");
-            if(code) { conn = peer.connect(code.toUpperCase()); setupConnection(); }
-        }
-
-        function handleAdvancedAction(type) {
-            if(!myProfile) return document.getElementById('identity-popup').classList.remove('hidden');
-            const id = document.getElementById('search-id').value.toUpperCase();
-            if(id) { conn = peer.connect(id); setupConnection(); }
+            loadHistory(id); // Load history immediately like WhatsApp
+            document.getElementById('chat-status-text').innerText = "Connecting...";
+            conn = peer.connect(id);
+            setupConnection();
         }
 
         function toggleChatView(active) {
@@ -245,13 +196,12 @@
         }
 
         function sendMsg() {
-            const val = document.getElementById('msg-input').value;
+            const val = document.getElementById('msg-input').value.trim();
             if(!val || !conn) return;
             conn.send({type: 'chat', text: val});
             appendMessage(val, 'me');
             saveToHistory(conn.peer, null, null, val, true);
             document.getElementById('msg-input').value = "";
-            conn.send({type: 'typing', isTyping: false});
         }
 
         function saveToHistory(pid, name, gender, text, isMe) {
@@ -259,7 +209,7 @@
             if(!chatHistory[pid]) chatHistory[pid] = { name: name || pid, gender: gender || 'male', messages: [] };
             if(name) chatHistory[pid].name = name;
             if(gender) chatHistory[pid].gender = gender;
-            if(text) chatHistory[pid].messages.push({text, isMe});
+            if(text) chatHistory[pid].messages.push({text, isMe, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})});
             localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
             renderRecentChats();
         }
@@ -270,33 +220,60 @@
             if(chatHistory[pid]) {
                 document.getElementById('chat-partner-name').innerText = chatHistory[pid].name;
                 document.getElementById('partner-avatar').src = getAvatar(chatHistory[pid].name, chatHistory[pid].gender);
-                chatHistory[pid].messages.forEach(m => appendMessage(m.text, m.isMe ? 'me' : 'other'));
+                chatHistory[pid].messages.forEach(m => appendMessage(m.text, m.isMe, m.time));
             }
         }
 
         function renderRecentChats() {
             const list = document.getElementById('recent-chats');
             list.innerHTML = '';
-            Object.keys(chatHistory).forEach(id => {
+            Object.keys(chatHistory).sort((a,b) => b.time - a.time).forEach(id => {
                 const b = document.createElement('div');
-                b.className = "flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer border border-transparent hover:border-white/5";
+                b.className = "flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-all";
                 b.innerHTML = `<img src="${getAvatar(chatHistory[id].name, chatHistory[id].gender)}" class="w-10 h-10 rounded-full bg-slate-800">
                                <div class="flex-1 overflow-hidden"><p class="text-sm font-bold truncate">${chatHistory[id].name}</p><p class="text-[10px] text-slate-500 font-mono">${id}</p></div>`;
-                b.onclick = () => { conn = peer.connect(id); setupConnection(); };
+                b.onclick = () => openRecentChat(id);
                 list.appendChild(b);
             });
         }
 
-        function appendMessage(text, sender) {
+        function appendMessage(text, isMe, time = null) {
             const container = document.getElementById('messages');
             const wrapper = document.createElement('div');
-            wrapper.className = `flex ${sender === 'me' ? 'justify-end' : 'justify-start'}`;
-            const m = document.createElement('div');
-            m.className = `max-w-[70%] px-4 py-3 rounded-2xl ${sender === 'me' ? 'bg-blue-600 rounded-tr-none' : 'glass rounded-tl-none'} text-sm`;
-            m.innerText = text;
-            wrapper.appendChild(m);
+            wrapper.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+            const t = time || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            wrapper.innerHTML = `<div class="max-w-[85%] md:max-w-[70%] px-4 py-2 rounded-2xl ${isMe ? 'bg-blue-600 rounded-tr-none' : 'glass rounded-tl-none'} text-sm">
+                ${text}<p class="text-[8px] opacity-50 mt-1 text-right">${t}</p></div>`;
             container.appendChild(wrapper);
             container.scrollTop = container.scrollHeight;
+        }
+
+        function createRoom() {
+            const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+            alert("Room Code: " + code);
+            toggleChatView(true);
+            document.getElementById('chat-partner-name').innerText = "Room Created";
+            document.getElementById('chat-status-text').innerText = "Share Code: " + code;
+            if(!myProfile) setTimeout(() => { if(!myProfile) document.getElementById('identity-popup').classList.remove('hidden'); }, 60000);
+        }
+
+        function promptJoin() {
+            const code = prompt("Enter 6-digit Code:");
+            if(code) { openRecentChat(code.toUpperCase()); }
+        }
+
+        function handleAdvancedAction(type) {
+            if(!myProfile) return document.getElementById('identity-popup').classList.remove('hidden');
+            const id = document.getElementById('search-id').value.toUpperCase().trim();
+            if(id) openRecentChat(id);
+        }
+
+        function emitTyping() {
+            if(conn && conn.open) {
+                conn.send({type: 'typing', isTyping: true});
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => conn.send({type: 'typing', isTyping: false}), 2000);
+            }
         }
     </script>
 </body>
